@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.mobileappbuilder.hhn6hf"
+      "bundleIdentifier": "com.emergent.mobileappbuilder.hhn6hf",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Rekam audio intro notifikasi pembayaran"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +21,8 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.emergent.mobileappbuilder.hhn6hf"
+      "package": "com.emergent.mobileappbuilder.hhn6hf",
+      "permissions": ["RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",

@@ -19,7 +19,7 @@ export function terbilang(input: number): string {
   return terbilang(Math.floor(n / 1000000000)) + " miliar" + (n % 1000000000 ? " " + terbilang(n % 1000000000) : "");
 }
 
-function playSource(uri: string, maxMs = 15000): Promise<void> {
+function playSource(uri: string, maxMs = 15000, volume = 1): Promise<void> {
   return new Promise((resolve) => {
     let player: any;
     let done = false;
@@ -33,6 +33,7 @@ function playSource(uri: string, maxMs = 15000): Promise<void> {
     };
     try {
       player = createAudioPlayer({ uri });
+      try { player.volume = volume; } catch {}
     } catch {
       resolve();
       return;
@@ -45,14 +46,15 @@ function playSource(uri: string, maxMs = 15000): Promise<void> {
   });
 }
 
-export async function previewIntro(uri: string) {
+export async function previewIntro(uri: string, volume = 1) {
   await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-  await playSource(uri, 6000);
+  await playSource(uri, 6000, volume);
 }
 
-export async function playPaymentSound(opts: { amount: number; voice: string; introUri?: string | null }) {
+export async function playPaymentSound(opts: { amount: number; voice: string; introUri?: string | null; volume?: number; repeat?: boolean }) {
+  const vol = opts.volume ?? 1;
   await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-  if (opts.introUri) await playSource(opts.introUri, 6000);
+  if (opts.introUri) await playSource(opts.introUri, 6000, vol);
   const text = `Pembayaran ${terbilang(opts.amount)} rupiah diterima`;
   try {
     const res = await fetch(`${BACKEND}/api/tts/generate`, {
@@ -61,7 +63,10 @@ export async function playPaymentSound(opts: { amount: number; voice: string; in
       body: JSON.stringify({ text, voice: opts.voice }),
     });
     const data = await res.json();
-    if (data && data.url) await playSource(`${BACKEND}${data.url}`, 15000);
+    if (data && data.url) {
+      const times = opts.repeat ? 2 : 1;
+      for (let i = 0; i < times; i++) await playSource(`${BACKEND}${data.url}`, 15000, vol);
+    }
   } catch {}
 }
 

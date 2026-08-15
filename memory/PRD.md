@@ -34,6 +34,7 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-08: Filter tanggal (Periode: Hari ini/Minggu ini/Bulan ini) + label Status di Riwayat. Alur QRIS Dinamis (QrisDynamicModal): input nominal + chip cepat → tampil QR dengan nominal, tombol Tandai lunas & Ubah nominal.
 - 2026-08: Grafik perbandingan omzet antar outlet (bar horizontal) di halaman Analisa.
 - 2026-08: Fitur suara notifikasi pembayaran. Backend: `/api/tts/generate` + `/api/tts/{key}.mp3` pakai Emergent OpenAI TTS (emergentintegrations, tts-1, voice nova/onyx = wanita/pria), cache Mongo `tts_audio`, EMERGENT_LLM_KEY di backend/.env. Frontend: `src/audio/paymentSound.ts` (terbilang + playback sekuensial intro→TTS via expo-audio, upload intro via expo-document-picker, validasi maks 5 dtk). Halaman "Suara pembayaran" di Profil + tombol "Test pembayaran masuk" di Beranda & Pengaturan. Audio/upload paling andal di perangkat (Expo Go).
+- 2026-08: Transaksi jadi state live (`txs`). Test/auto pembayaran menambah transaksi ke Riwayat & memutar suara otomatis. Pengaturan volume (Pelan/Sedang/Keras) + toggle "Ulangi nominal 2×" + toggle "Auto-simulasi pembayaran" (interval 15dtk). Rekam intro langsung di app via expo-audio recorder (izin mikrofon, auto-stop 5dtk) selain upload. Dua menu link eksternal di Beranda (Pencatatan Pengeluaran, Absensi Karyawan) via expo-web-browser. app.json: NSMicrophoneUsageDescription + RECORD_AUDIO.
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
