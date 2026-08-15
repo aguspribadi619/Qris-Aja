@@ -26,6 +26,7 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-08: Pakai logo resmi "QRIS Aja" (webp) di hero via expo-image; ikon akses cepat diubah ke gaya kartu putih + ikon berwarna vibrant + aksen titik (mengikuti referensi kompetitor).
 - 2026-08: Ikon akses cepat diganti jadi ilustrasi SVG multi-warna custom (react-native-svg) di `src/components/QuickIcons.tsx` — gaya ilustrasi berwarna seperti app pembanding (netzme).
 - 2026-08: Hero/header diubah ke gradien mint terang; logo tampil tanpa background putih agar navy+kuning jelas; pill outlet & teks welcome disesuaikan jadi navy.
+- 2026-08: Ikon ilustrasi berwarna diperluas ke Profil (kelola pegawai, outlet, notifikasi, pengaturan), Analisa (transaksi, dompet, trofi), dan modal QRIS (QR code, uang tunai) via `QuickIcons.tsx` agar seragam & hidup.
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.

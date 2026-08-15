@@ -83,6 +83,85 @@ function Bantuan({ size = 44 }: Props) {
   );
 }
 
+function Pengaturan({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Rect x="8" y="15.5" width="32" height="3.4" rx="1.7" fill="#C9E9E2" />
+      <Rect x="8" y="29.1" width="32" height="3.4" rx="1.7" fill="#DDD6F7" />
+      <Circle cx="18" cy="17.2" r="5.6" fill="#17C3A2" />
+      <Circle cx="18" cy="17.2" r="2.1" fill="#ffffff" opacity="0.9" />
+      <Circle cx="31" cy="30.8" r="5.6" fill="#7C6AE8" />
+      <Circle cx="31" cy="30.8" r="2.1" fill="#ffffff" opacity="0.9" />
+    </Svg>
+  );
+}
+
+function Wallet({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Rect x="20" y="9" width="16" height="9" rx="2" fill="#17C3A2" />
+      <Rect x="8" y="13" width="32" height="24" rx="5" fill="#F2A93C" />
+      <Rect x="8" y="13" width="32" height="7" rx="5" fill="#E0932F" />
+      <Rect x="28" y="22" width="12" height="8" rx="3" fill="#16204A" />
+      <Circle cx="33" cy="26" r="1.9" fill="#F2A93C" />
+    </Svg>
+  );
+}
+
+function Trophy({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path d="M15 9 h18 v7 a9 9 0 0 1 -18 0 Z" fill="#F2A93C" />
+      <Path d="M15 11 h-3 a4 4 0 0 0 0 8 h1" fill="none" stroke="#E0932F" strokeWidth="2.4" />
+      <Path d="M33 11 h3 a4 4 0 0 1 0 8 h-1" fill="none" stroke="#E0932F" strokeWidth="2.4" />
+      <Rect x="22" y="24" width="4" height="6" fill="#E0932F" />
+      <Rect x="16" y="30" width="16" height="4" rx="1.5" fill="#16204A" />
+      <Rect x="19" y="34" width="10" height="3.5" rx="1.5" fill="#16204A" />
+      <Path d="M24 12 l1.3 2.6 2.9 .4 -2.1 2 .5 2.9 -2.6 -1.4 -2.6 1.4 .5 -2.9 -2.1 -2 2.9 -.4 Z" fill="#ffffff" opacity="0.9" />
+    </Svg>
+  );
+}
+
+function Transaksi({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path d="M17 33 V15" stroke="#17C3A2" strokeWidth="3.2" strokeLinecap="round" />
+      <Path d="M11.5 20.5 L17 15 L22.5 20.5" stroke="#17C3A2" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <Path d="M31 15 V33" stroke="#F2A93C" strokeWidth="3.2" strokeLinecap="round" />
+      <Path d="M25.5 27.5 L31 33 L36.5 27.5" stroke="#F2A93C" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function Qris({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Rect x="11" y="11" width="10" height="10" rx="2.5" fill="#16204A" />
+      <Rect x="14.5" y="14.5" width="3" height="3" rx="0.5" fill="#ffffff" />
+      <Rect x="27" y="11" width="10" height="10" rx="2.5" fill="#16204A" />
+      <Rect x="30.5" y="14.5" width="3" height="3" rx="0.5" fill="#ffffff" />
+      <Rect x="11" y="27" width="10" height="10" rx="2.5" fill="#16204A" />
+      <Rect x="14.5" y="30.5" width="3" height="3" rx="0.5" fill="#ffffff" />
+      <Rect x="27" y="27" width="4" height="4" rx="1" fill="#17C3A2" />
+      <Rect x="33" y="27" width="4" height="4" rx="1" fill="#17C3A2" />
+      <Rect x="27" y="33" width="4" height="4" rx="1" fill="#17C3A2" />
+      <Rect x="33" y="33" width="4" height="4" rx="1" fill="#17C3A2" />
+    </Svg>
+  );
+}
+
+function Cash({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Rect x="7" y="14" width="34" height="20" rx="4" fill="#17C3A2" />
+      <Circle cx="24" cy="24" r="6.5" fill="#E6FAF5" />
+      <SvgText x="24" y="27.4" fontSize="8" fontWeight="bold" fill="#0F806B" textAnchor="middle">Rp</SvgText>
+      <Circle cx="12" cy="19" r="1.8" fill="#ffffff" opacity="0.7" />
+      <Circle cx="36" cy="29" r="1.8" fill="#ffffff" opacity="0.7" />
+    </Svg>
+  );
+}
+
 const MAP: Record<string, React.FC<Props>> = {
   analisa: Analisa,
   pegawai: Pegawai,
@@ -90,6 +169,12 @@ const MAP: Record<string, React.FC<Props>> = {
   outlet: Outlet,
   notifikasi: Notifikasi,
   bantuan: Bantuan,
+  pengaturan: Pengaturan,
+  wallet: Wallet,
+  trophy: Trophy,
+  transaksi: Transaksi,
+  qris: Qris,
+  cash: Cash,
 };
 
 export function QuickArt({ name, size = 44 }: { name: string; size?: number }) {
