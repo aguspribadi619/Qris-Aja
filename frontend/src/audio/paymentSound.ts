@@ -124,7 +124,7 @@ export async function announcePayment(opts: AnnounceOpts) {
   if (useIntroTts) parts.push("Sukses");
   for (let i = 0; i < times; i++) parts.push(nominalText);
   if (useOutroTts) parts.push("Terima kasih");
-  const combinedText = parts.join(", ") + ".";
+  const combinedText = parts.join(". ") + ".";
   const combinedUrl = await generateTts(combinedText, voiceChar);
 
   const segs: { uri: string; max: number }[] = [];

@@ -45,7 +45,7 @@ def terbilang(x: int) -> str:
 
 def combined_default(amount: int) -> str:
     """Matches the frontend default flow: intro + nominal + outro in ONE utterance."""
-    return f"Sukses, {terbilang(amount)} rupiah, Terima kasih."
+    return f"Sukses. {terbilang(amount)} rupiah. Terima kasih."
 
 
 # Common warkop / UMKM nominal values + the prototype's demo amounts.
