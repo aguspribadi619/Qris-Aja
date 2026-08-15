@@ -44,6 +44,8 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 
 - 2026-06: Perbaikan suara — (1) Kecepatan bicara diatur per karakter via ElevenLabs `VoiceSettings.speed` (Lilis 0.80 paling pelan) agar tidak terburu-buru. (2) Alur default (Sukses→nominal→Terima kasih) kini digabung jadi SATU utterance TTS → pemutaran gapless (menghilangkan jeda ~2 dtk); intro/outro custom tetap segmen terpisah dgn gap 60ms. (3) Hemat biaya: audio di-cache permanen di Mongo `tts_audio` (replay gratis, tanpa API). Script `warmup_tts.py` mem-pra-generate 20 nominal umum (voice putri) + 4 sapaan karakter agar transaksi umum & tombol Tes langsung dari cache.
 
+- 2026-06: Perbaikan playback & rekam — (1) Playback dirombak: SEMUA segmen (intro clip → TTS gabungan → outro clip) di-`loadPlayer` (preload/buffer) dulu, baru diputar berurutan → menghilangkan jeda buffering pada intro custom & memastikan segmen outro selalu terputar. (2) Tombol rekam diubah jadi **tekan-tahan** (onPressIn mulai, onPressOut berhenti) dengan penanganan race via `holdingRef`/`recTargetRef` + auto-stop maks 3 dtk. (3) Rekaman disalin ke file unik (`expo-file-system` legacy `copyAsync` ke cache `qa_<intro|outro>_<ts>.m4a`) agar intro & outro tidak saling menimpa.
+
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
 - P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.

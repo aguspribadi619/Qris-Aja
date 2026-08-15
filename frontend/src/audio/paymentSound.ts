@@ -56,33 +56,45 @@ async function generateTts(text: string, voice: string): Promise<string | null> 
   return null;
 }
 
-// Play a single audio segment. Resolves on natural finish (didJustFinish) OR when maxMs cap
-// is reached (so 3s/5s custom clips never force extra silence). A tiny gap keeps it natural.
-function playSegment(uri: string, maxMs: number, volume: number, gapMs = 140): Promise<void> {
+// Create a player and wait until the audio is actually loaded (buffered) so playback
+// starts instantly. Resolves the player (or null on failure).
+function loadPlayer(uri: string, timeoutMs = 8000): Promise<any | null> {
   return new Promise((resolve) => {
     let player: any;
+    let done = false;
+    let sub: any;
+    const finish = (p: any) => { if (done) return; done = true; try { sub && sub.remove(); } catch {} resolve(p); };
+    try { player = createAudioPlayer({ uri }); } catch { resolve(null); return; }
+    sub = player.addListener("playbackStatusUpdate", (st: any) => { if (st && st.isLoaded) finish(player); });
+    setTimeout(() => finish(player), timeoutMs); // fallback: play() still works even if event missed
+  });
+}
+
+// Play an already-loaded player to natural finish (didJustFinish) or a maxMs cap.
+function playPlayer(player: any, volume: number, maxMs: number, gapMs = 60): Promise<void> {
+  return new Promise((resolve) => {
+    if (!player) { resolve(); return; }
     let done = false;
     let sub: any;
     const finish = () => {
       if (done) return;
       done = true;
       try { sub && sub.remove(); } catch {}
-      try { player && player.remove(); } catch {}
+      try { player.remove(); } catch {}
       setTimeout(resolve, gapMs);
     };
-    try {
-      player = createAudioPlayer({ uri });
-      try { player.volume = volume; } catch {}
-    } catch {
-      resolve();
-      return;
-    }
-    sub = player.addListener("playbackStatusUpdate", (st: any) => {
-      if (st && st.didJustFinish) finish();
-    });
+    try { player.volume = volume; } catch {}
+    sub = player.addListener("playbackStatusUpdate", (st: any) => { if (st && st.didJustFinish) finish(); });
+    try { player.seekTo(0); } catch {}
     try { player.play(); } catch {}
     setTimeout(finish, maxMs);
   });
+}
+
+// One-shot helper (load then play) used for single-clip playback like the voice preview.
+async function playSegment(uri: string, maxMs: number, volume: number, gapMs = 60): Promise<void> {
+  const p = await loadPlayer(uri);
+  await playPlayer(p, volume, maxMs, gapMs);
 }
 
 export type AnnounceOpts = {
@@ -115,12 +127,15 @@ export async function announcePayment(opts: AnnounceOpts) {
   const combinedText = parts.join(", ") + ".";
   const combinedUrl = await generateTts(combinedText, voiceChar);
 
-  // Custom intro clip (default intro word is already inside the combined TTS)
-  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 3000, volume, 60);
-  // Combined TTS (gapless)
-  if (combinedUrl) await playSegment(combinedUrl, 25000, volume, 60);
-  // Custom outro clip (default outro word is already inside the combined TTS)
-  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 3000, volume, 60);
+  const segs: { uri: string; max: number }[] = [];
+  if (opts.intro && opts.intro.uri) segs.push({ uri: opts.intro.uri, max: opts.intro.max || 3500 });
+  if (combinedUrl) segs.push({ uri: combinedUrl, max: 25000 });
+  if (opts.outro && opts.outro.uri) segs.push({ uri: opts.outro.uri, max: opts.outro.max || 3500 });
+
+  // Preload every segment first so transitions are instant — removes the buffering gap
+  // between a local intro clip and the remote TTS, and guarantees the outro clip plays.
+  const players = await Promise.all(segs.map((s) => loadPlayer(s.uri)));
+  for (let i = 0; i < players.length; i++) { await playPlayer(players[i], volume, segs[i].max); }
 }
 
 export async function previewAnnouncement(opts: Omit<AnnounceOpts, "amount">) {
