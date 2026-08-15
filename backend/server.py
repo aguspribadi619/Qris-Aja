@@ -10,8 +10,26 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List
 import uuid
+import subprocess
 from datetime import datetime, timezone
 from elevenlabs import ElevenLabs, VoiceSettings
+
+
+def normalize_loudness(raw: bytes) -> bytes:
+    """Boost TTS to a strong, consistent loudness (EBU R128) so the nominal is never
+    'tenggelam' next to loud custom intro/outro recordings. Falls back to raw on error."""
+    try:
+        p = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0",
+             "-af", "loudnorm=I=-11:TP=-1.5:LRA=11",
+             "-ar", "44100", "-b:a", "128k", "-f", "mp3", "pipe:1"],
+            input=raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+        )
+        if p.returncode == 0 and p.stdout:
+            return p.stdout
+    except Exception:
+        pass
+    return raw
 
 
 ROOT_DIR = Path(__file__).parent
@@ -60,7 +78,7 @@ async def generate_tts(req: TTSRequest):
     text = (req.text or "").strip()[:500]
     if not text:
         raise HTTPException(status_code=400, detail="text is required")
-    key = hashlib.sha256(f"{text}|{voice_id}|{EL_MODEL}|{speed}".encode()).hexdigest()
+    key = hashlib.sha256(f"{text}|{voice_id}|{EL_MODEL}|{speed}|n1".encode()).hexdigest()
     existing = await db.tts_audio.find_one({"key": key})
     if not existing:
         audio_stream = el_client.text_to_speech.convert(
@@ -76,7 +94,7 @@ async def generate_tts(req: TTSRequest):
                 speed=speed,
             ),
         )
-        audio_bytes = b"".join(audio_stream)
+        audio_bytes = normalize_loudness(b"".join(audio_stream))
         await db.tts_audio.insert_one({
             "key": key,
             "b64": base64.b64encode(audio_bytes).decode(),

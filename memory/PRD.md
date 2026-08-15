@@ -46,6 +46,8 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 
 - 2026-06: Perbaikan playback & rekam — (1) Playback dirombak: SEMUA segmen (intro clip → TTS gabungan → outro clip) di-`loadPlayer` (preload/buffer) dulu, baru diputar berurutan → menghilangkan jeda buffering pada intro custom & memastikan segmen outro selalu terputar. (2) Tombol rekam diubah jadi **tekan-tahan** (onPressIn mulai, onPressOut berhenti) dengan penanganan race via `holdingRef`/`recTargetRef` + auto-stop maks 3 dtk. (3) Rekaman disalin ke file unik (`expo-file-system` legacy `copyAsync` ke cache `qa_<intro|outro>_<ts>.m4a`) agar intro & outro tidak saling menimpa.
 
+- 2026-06: Fix "nominal tenggelam" saat pakai intro/outro custom — rekaman mic jauh lebih kencang dari TTS. Backend kini menormalisasi loudness TTS via ffmpeg (`loudnorm I=-11:TP=-1.5`) → mean naik ~7 dB (−22.6→−15.2 dB), puncak −1.7 dB, konsisten & lantang; fallback aman ke raw jika ffmpeg absen. Cache key ditambah tag `n1` (regenerasi versi baru). Frasa pengumuman dipisah kalimat dgn titik ("Sukses. [nominal] rupiah. Terima kasih.") agar nominal menonjol. `warmup_tts.py` disesuaikan & di-run ulang (putri + sapaan).
+
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
 - P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.
