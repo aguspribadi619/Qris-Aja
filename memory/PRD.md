@@ -31,6 +31,7 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-08: Logo hero diperbesar (174x44). Badge jumlah notifikasi belum dibaca (merah, angka) di ikon lonceng Beranda & menu Notifikasi Profil; badge hilang (jadi 0) setelah pusat notifikasi dibuka.
 - 2026-08: 4 fitur baru — (1) Ringkasan harian (omzet & jumlah transaksi hari ini) di atas dashboard; (2) Ekspor CSV riwayat (tombol + toast konfirmasi); (3) Kartu QRIS statis siap cetak (QrisPrintModal, tombol Cetak/Bagikan) dibuka dari opsi QRIS Statis; (4) Tandai notifikasi dibaca per-item + "Tandai semua", badge unread kini derivatif dari state notifications. Tambah komponen Toast global.
 - 2026-08: Header (hero) diperpendek (minHeight 156) & logo dibuat mepet kiri (paddingHorizontal 16, marginLeft -2).
+- 2026-08: Filter tanggal (Periode: Hari ini/Minggu ini/Bulan ini) + label Status di Riwayat. Alur QRIS Dinamis (QrisDynamicModal): input nominal + chip cepat → tampil QR dengan nominal, tombol Tandai lunas & Ubah nominal.
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
