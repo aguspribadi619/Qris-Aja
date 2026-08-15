@@ -24,6 +24,7 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-06: Hapus label "3M: Membantu Mudah".
 - 2026-08: Ikon berwarna + desain "hidup" (badge terisi, bayangan lembut, aksen spark). Fix style `badgeInner`/`badgeSpark` yang sebelumnya belum didefinisikan.
 - 2026-08: Pakai logo resmi "QRIS Aja" (webp) di hero via expo-image; ikon akses cepat diubah ke gaya kartu putih + ikon berwarna vibrant + aksen titik (mengikuti referensi kompetitor).
+- 2026-08: Ikon akses cepat diganti jadi ilustrasi SVG multi-warna custom (react-native-svg) di `src/components/QuickIcons.tsx` — gaya ilustrasi berwarna seperti app pembanding (netzme).
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
