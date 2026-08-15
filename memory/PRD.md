@@ -28,6 +28,7 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-08: Hero/header diubah ke gradien mint terang; logo tampil tanpa background putih agar navy+kuning jelas; pill outlet & teks welcome disesuaikan jadi navy.
 - 2026-08: Ikon ilustrasi berwarna diperluas ke Profil (kelola pegawai, outlet, notifikasi, pengaturan), Analisa (transaksi, dompet, trofi), dan modal QRIS (QR code, uang tunai) via `QuickIcons.tsx` agar seragam & hidup.
 - 2026-08: Pusat notifikasi memakai ilustrasi berwarna (sukses/centang hijau, tips/bohlam, suara/speaker).
+- 2026-08: Logo hero diperbesar (174x44). Badge jumlah notifikasi belum dibaca (merah, angka) di ikon lonceng Beranda & menu Notifikasi Profil; badge hilang (jadi 0) setelah pusat notifikasi dibuka.
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
