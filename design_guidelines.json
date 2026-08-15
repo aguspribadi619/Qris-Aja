@@ -1,0 +1,62 @@
+{
+  "app_name": "QRIS Aja",
+  "app_type": "mobile_web_app",
+  "context": "Merchant management and QRIS payment mobile prototype for Indonesian UMKM/stores",
+  "theme": "light",
+  "typography": {
+    "font_family": "Plus Jakarta Sans, sans-serif",
+    "headings": "font-bold tracking-tight text-[#0B1233]",
+    "body": "font-normal text-[#161A33]"
+  },
+  "colors": {
+    "primary_navy": "#0B1233",
+    "secondary_navy": "#16204A",
+    "teal": "#17C3A2",
+    "gold_start": "#FFDA83",
+    "gold_end": "#F2A93C",
+    "purple": "#7C6AE8",
+    "background": "#F2F4FA",
+    "surface": "#FFFFFF",
+    "text_dark": "#161A33",
+    "text_muted": "#838DAD",
+    "border_color": "#ECEFF7",
+    "danger": "#E8564C"
+  },
+  "ui_features": [
+    "Mobile frame wrap (centered phone simulation)",
+    "Outlet selector dropdown with multi-outlet support",
+    "Live Balance card with privacy hide toggle & instant withdraw simulation",
+    "Quick actions: Buat QRIS, Cek Mutasi, Tarik Saldo, Riwayat",
+    "FAB QRIS center button opening dynamic/static QRIS generator with sound notification toggle",
+    "Promo carousel (non-intrusif tips & UMKM growth programs)",
+    "Recent transactions list with status badges",
+    "Riwayat screen with date filter, status filter, search, and export CSV simulation",
+    "Analisa screen with insight cards, stats, bar chart preview, and top outlets",
+    "Kelola Pegawai CRUD with full validation form (tambah, edit, hapus, role management: Kasir/Supervisor)",
+    "Profil merchant with verification status, store info, and settings",
+    "Pusat Notifikasi & In-app guidance in Bahasa Indonesia with sound alert simulation",
+    "Informative empty, error, and retry states across tabs"
+  ],
+  "image_urls": {
+    "merchant_store_logo": "https://customer-assets-jai6qajn.emergentagent.net/job_mobile-app-builder-2902/artifacts/hvf2mgcn_qris%20aja%20logo.png",
+    "store_interior": "https://images.unsplash.com/photo-1613274554329-70f997f5789f?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "store_owner": "https://images.unsplash.com/photo-1715635846028-f162249377c8?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "navigation": {
+    "bottom_nav": [
+      {"id": "beranda", "label": "Beranda", "icon": "Home"},
+      {"id": "riwayat", "label": "Riwayat", "icon": "Clock"},
+      {"id": "qris_fab", "label": "QRIS", "icon": "QrCode", "is_fab": true},
+      {"id": "analisa", "label": "Analisa", "icon": "BarChart3"},
+      {"id": "profil", "label": "Profil", "icon": "User"}
+    ]
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Always use data-testid on all interactive elements (buttons, inputs, tabs, modals).",
+    "Ensure all text meets APCA/WCAG contrast standards.",
+    "Use Bahasa Indonesia for all UI labels, empty states, and notification messages.",
+    "Provide smooth tab switching and modal dialogs with Shadcn primitives.",
+    "No cash/PPOB features included as per strict requirements.",
+    "Support responsive preview inside a clean mobile frame with outer background."
+  ]
+}

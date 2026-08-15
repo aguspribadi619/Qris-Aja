@@ -1,0 +1,56 @@
+{
+  "summary": "Frontend mobile preview tested at 375x667 for dashboard, privacy toggle, history filters, navigation, QRIS modal, employee CRUD, and notifications.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "QRIS modal",
+        "issue": "At 375x667, the bottom sheet is clipped below the viewport; close-qris is outside viewport and cannot be tapped reliably.",
+        "testID": "close-qris",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Tambah pegawai modal",
+        "issue": "Employee form sheet is clipped below the 375x667 viewport; outlet selection is outside viewport and cannot be tapped.",
+        "testID": "employee-outlet-Warkop Sejagat Bekasi 1",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "QRIS and employee modal sheets",
+        "issues": [
+          "Modal content exceeds mobile viewport without internal scrolling or keyboard-aware scroll handling."
+        ]
+      }
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_1.json",
+    "/app/frontend/app/index.tsx"
+  ],
+  "action_items": [
+    "Make QRIS and employee bottom sheets internally scrollable and constrain height to the mobile viewport.",
+    "Add stable testIDs to notification close, employee save/cancel, role options, and deletion confirmation controls."
+  ],
+  "critical_code_review_comments": [
+    "All transaction, balance, notification, and employee data is hardcoded dummy state as required; no real API integration is present (MOCKED API).",
+    "Employee role includes Kasir, which is part of employee CRUD but must not become a standalone Kasir feature; no standalone Kasir/PPOB navigation was found.",
+    "Several modal controls lack testID attributes, reducing automation coverage."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only request)",
+    "frontend": "70%"
+  },
+  "seed_data_creation": "No seed data created.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Dashboard loaded. Privacy toggle and history status filters passed. Bottom navigation to history and analytics passed. QRIS and employee modal viewport clipping blocked complete CRUD/modal close testing.",
+  "rca_of_issue": "Reproduction: set viewport 375x667, open qris-fab or Profil > Kelola pegawai > Tambah pegawai. The Modal sheet has fixed/minimum content and no ScrollView; lower controls render below the visible viewport, so Playwright reports element outside viewport. Mitigation: wrap sheet content in ScrollView and apply max-height/flex constraints, preserving KeyboardAvoidingView for employee form."
+}
