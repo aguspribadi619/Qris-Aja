@@ -19,7 +19,7 @@ import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
 import { useAudioRecorder, RecordingPresets, AudioModule, setAudioModeAsync } from "expo-audio";
 import { QuickArt } from "@/src/components/QuickIcons";
-import { playPaymentSound, previewIntro, pickIntroAudio } from "@/src/audio/paymentSound";
+import { announcePayment, previewAnnouncement, pickIntroAudio, VOICE_CHARS } from "@/src/audio/paymentSound";
 import { storage } from "@/src/utils/storage";
 
 const LOGO = "https://customer-assets-jai6qajn.emergentagent.net/job_mobile-app-builder-2902/artifacts/lusvja8j_qris%20aja%20terbaru.webp";
@@ -84,20 +84,24 @@ export default function Index() {
   ]);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [settingsScreen, setSettingsScreen] = useState(false);
-  const [voiceGender, setVoiceGender] = useState("wanita");
+  const [voiceGender, setVoiceGender] = useState("putri");
   const [intro, setIntro] = useState<{ uri: string; name: string } | null>(null);
+  const [outro, setOutro] = useState<{ uri: string; name: string } | null>(null);
   const [volume, setVolume] = useState(1);
   const [repeatTwice, setRepeatTwice] = useState(false);
   const [autoSim, setAutoSim] = useState(false);
   const [txs, setTxs] = useState(transactions);
   React.useEffect(() => { (async () => {
-    const v = await storage.getItem("qa_voice", "wanita");
+    const v = await storage.getItem("qa_voice", "putri");
     const iu = await storage.getItem("qa_intro_uri", "");
     const inm = await storage.getItem("qa_intro_name", "");
+    const ou = await storage.getItem("qa_outro_uri", "");
+    const onm = await storage.getItem("qa_outro_name", "");
     const vol = await storage.getItem("qa_volume", 1);
     const rep = await storage.getItem("qa_repeat", false);
     if (v) setVoiceGender(v);
     if (iu) setIntro({ uri: iu, name: inm || "intro" });
+    if (ou) setOutro({ uri: ou, name: onm || "outro" });
     if (typeof vol === "number") setVolume(vol);
     if (typeof rep === "boolean") setRepeatTwice(rep);
   })(); }, []);
@@ -112,6 +116,7 @@ export default function Index() {
   const removeEmployee = (id: string) => Alert.alert("Hapus pegawai?", "Data pegawai akan dihapus dari daftar.", [{ text: "Batal", style: "cancel" }, { text: "Hapus", style: "destructive", onPress: () => setEmployees((old) => old.filter((e) => e.id !== id)) }]);
   const saveVoice = (v: string) => { setVoiceGender(v); storage.setItem("qa_voice", v); };
   const saveIntro = (i: { uri: string; name: string } | null) => { setIntro(i); storage.setItem("qa_intro_uri", i ? i.uri : ""); storage.setItem("qa_intro_name", i ? i.name : ""); };
+  const saveOutro = (o: { uri: string; name: string } | null) => { setOutro(o); storage.setItem("qa_outro_uri", o ? o.uri : ""); storage.setItem("qa_outro_name", o ? o.name : ""); };
   const saveVolume = (v: number) => { setVolume(v); storage.setItem("qa_volume", v); };
   const saveRepeat = (v: boolean) => { setRepeatTwice(v); storage.setItem("qa_repeat", v); };
   const openLink = (url: string) => { WebBrowser.openBrowserAsync(url).catch(() => {}); };
@@ -123,21 +128,24 @@ export default function Index() {
     const tx = { id: String(Date.now()), outlet: selectedOutlet === "Semua outlet" ? "Warkop Sejagat Meruyung" : selectedOutlet, time: `Hari ini, ${hh}.${mm}`, type: "QRIS Dinamis", amount: formatRp(amt), status: "Berhasil" };
     setTxs((old) => [tx, ...old]);
     showToast(`Pembayaran masuk ${formatRp(amt)}`);
-    try { await playPaymentSound({ amount: amt, voice: voiceGender, introUri: intro?.uri, volume, repeat: repeatTwice }); } catch {}
+    try { await announcePayment({ amount: amt, voiceChar: voiceGender, intro: intro ? { uri: intro.uri, max: 5000 } : null, outro: outro ? { uri: outro.uri, max: 5000 } : null, volume, repeat: repeatTwice }); } catch {}
+  };
+  const previewSound = async () => {
+    try { await previewAnnouncement({ voiceChar: voiceGender, intro: intro ? { uri: intro.uri, max: 5000 } : null, outro: outro ? { uri: outro.uri, max: 5000 } : null, volume, repeat: repeatTwice }); } catch {}
   };
   React.useEffect(() => {
     if (!autoSim) return;
     const id = setInterval(() => { testPayment(); }, 15000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSim, voiceGender, intro, volume, repeatTwice, selectedOutlet]);
+  }, [autoSim, voiceGender, intro, outro, volume, repeatTwice, selectedOutlet]);
 
   return <SafeAreaView style={styles.safe}><View style={styles.phone}><View style={styles.statusBar}><Text style={styles.statusTime}>09:41</Text><View style={styles.statusIcons}><Icon name="cellular" color={C.navy} size={13} /><Icon name="wifi" color={C.navy} size={13} /><Icon name="battery-full" color={C.navy} size={15} /></View></View>
     {tab === "beranda" && <Home selectedOutlet={selectedOutlet} onOutlet={() => setOutletModal(true)} hiddenBalance={hiddenBalance} onHide={() => setHiddenBalance(!hiddenBalance)} onGo={go} onQris={() => setQrisModal(true)} onNotifications={openNotifications} notifCount={unreadCount} onTestPayment={testPayment} transactions={txs} onOpenLink={openLink} />}
     {tab === "riwayat" && <History onBack={() => go("beranda")} filter={historyFilter} setFilter={setHistoryFilter} onExport={exportCsv} transactions={txs} />}
     {tab === "analisa" && <Analytics onBack={() => go("beranda")} />}
     {tab === "profil" && !employeeScreen && !settingsScreen && <Profile onBack={() => go("beranda")} onEmployees={() => setEmployeeScreen(true)} onNotifications={openNotifications} notifCount={unreadCount} onSoundSettings={() => setSettingsScreen(true)} />}
-    {tab === "profil" && settingsScreen && <SoundSettings onBack={() => setSettingsScreen(false)} voice={voiceGender} onVoice={saveVoice} intro={intro} onIntro={saveIntro} onToast={showToast} onTest={testPayment} volume={volume} onVolume={saveVolume} repeat={repeatTwice} onRepeat={saveRepeat} autoSim={autoSim} onAutoSim={setAutoSim} />}
+    {tab === "profil" && settingsScreen && <SoundSettings onBack={() => setSettingsScreen(false)} voice={voiceGender} onVoice={saveVoice} intro={intro} onIntro={saveIntro} outro={outro} onOutro={saveOutro} onToast={showToast} onTest={testPayment} onPreview={previewSound} volume={volume} onVolume={saveVolume} repeat={repeatTwice} onRepeat={saveRepeat} autoSim={autoSim} onAutoSim={setAutoSim} />}
     {tab === "profil" && employeeScreen && <Employees onBack={() => setEmployeeScreen(false)} employees={employees} onAdd={() => openEmployee()} onEdit={openEmployee} onRemove={removeEmployee} />}
     <BottomNav tab={tab} onTab={go} onQris={() => setQrisModal(true)} />
     <QrisModal visible={qrisModal} onClose={() => setQrisModal(false)} onStatic={() => { setQrisModal(false); setTimeout(() => setQrisPrintModal(true), 320); }} onDynamic={() => { setQrisModal(false); setTimeout(() => setQrisDynamicModal(true), 320); }} />
@@ -181,31 +189,34 @@ function NotificationModal({ visible, onClose, notifications, onMarkRead, onMark
 function QrisPrintModal({ visible, onClose, outlet, onToast }: any) { return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><View style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll}><View style={styles.sheetHandle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>Kartu QRIS</Text><Text style={styles.muted}>Siap dicetak untuk meja kasir</Text></View><Pressable testID="close-qris-print" onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View><View style={styles.printCard}><View style={styles.printBrandBar}><Text style={styles.printBrandText}>QRIS</Text><Text style={styles.printBrandSub}>QR CODE STANDAR PEMBAYARAN</Text></View><Text style={styles.printMerchant}>{outlet}</Text><Text style={styles.printNmid}>NMID : ID1023456789012</Text><View style={styles.printQrBox}><QuickArt name="qris" size={180} /></View><Text style={styles.printHint}>Pindai untuk membayar dengan aplikasi apa pun</Text><Image source={{ uri: LOGO }} style={styles.printLogo} contentFit="contain" /></View><View style={styles.printButtons}><Pressable testID="print-qris" onPress={() => { onClose(); onToast("Kartu QRIS dikirim ke printer"); }} style={({ pressed }) => [styles.printBtnPrimary, pressed && styles.pressed]}><Icon name="print-outline" color="#fff" size={18} /><Text style={styles.printBtnPrimaryText}>Cetak</Text></Pressable><Pressable testID="share-qris" onPress={() => { onClose(); onToast("Kartu QRIS dibagikan"); }} style={({ pressed }) => [styles.printBtnGhost, pressed && styles.pressed]}><Icon name="share-social-outline" color={C.navy} size={18} /><Text style={styles.printBtnGhostText}>Bagikan</Text></Pressable></View></ScrollView></View></Modal>; }
 function QrisDynamicModal({ visible, onClose, outlet, onToast }: any) { const [amount, setAmount] = useState(""); const [generated, setGenerated] = useState(false); React.useEffect(() => { if (!visible) { setAmount(""); setGenerated(false); } }, [visible]); const numeric = Number(amount || "0"); const setAmt = (t: string) => setAmount(t.replace(/[^0-9]/g, "")); return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll} keyboardShouldPersistTaps="handled"><View style={styles.sheetHandle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>QRIS Dinamis</Text><Text style={styles.muted}>{generated ? "Tunjukkan QR ke pembeli" : "Masukkan nominal pembayaran"}</Text></View><Pressable testID="close-qris-dynamic" onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View>{!generated ? <><View style={styles.dynAmountRow}><Text style={styles.dynRp}>Rp</Text><TextInput testID="dynamic-amount" value={numeric ? formatRp(numeric).replace("Rp ", "") : ""} onChangeText={setAmt} keyboardType="number-pad" placeholder="0" placeholderTextColor="#AAB1C8" style={styles.dynInput} /></View><View style={styles.dynChips}>{[10000, 20000, 50000, 100000].map((v) => <Pressable testID={`amount-${v}`} key={v} onPress={() => setAmount(String(v))} style={({ pressed }) => [styles.dynChip, pressed && styles.pressed]}><Text style={styles.dynChipText}>{formatRp(v)}</Text></Pressable>)}</View><Pressable testID="generate-qris" disabled={!numeric} onPress={() => setGenerated(true)} style={({ pressed }) => [styles.dynBtn, !numeric && styles.dynBtnDisabled, pressed && styles.pressed]}><Icon name="qr-code" color={C.navy} size={18} /><Text style={styles.dynBtnText}>Buat QR Pembayaran</Text></Pressable></> : <><View style={styles.printCard}><View style={styles.printBrandBar}><Text style={styles.printBrandText}>QRIS</Text><Text style={styles.printBrandSub}>QR CODE STANDAR PEMBAYARAN</Text></View><Text style={styles.printMerchant}>{outlet}</Text><Text style={styles.dynAmountDisplay}>{formatRp(numeric)}</Text><View style={styles.printQrBox}><QuickArt name="qris" size={170} /></View><Text style={styles.printHint}>Pindai & bayar sesuai nominal di atas</Text></View><Pressable testID="mark-paid" onPress={() => { onClose(); onToast(`Pembayaran ${formatRp(numeric)} diterima`); }} style={({ pressed }) => [styles.dynBtn, pressed && styles.pressed]}><Icon name="checkmark-circle" color={C.navy} size={18} /><Text style={styles.dynBtnText}>Tandai lunas</Text></Pressable><Pressable testID="change-amount" onPress={() => setGenerated(false)} style={styles.dynSecondaryBtn}><Text style={styles.dynSecondaryText}>Ubah nominal</Text></Pressable></>}</ScrollView></KeyboardAvoidingView></Modal>; }
 function Toggle({ value, onValue, testID }: any) { return <Pressable testID={testID} onPress={() => onValue(!value)} style={[styles.toggle, value && styles.toggleOn]}><View style={[styles.toggleKnob, value && styles.toggleKnobOn]} /></Pressable>; }
-function SoundSettings({ onBack, voice, onVoice, intro, onIntro, onToast, onTest, volume, onVolume, repeat, onRepeat, autoSim, onAutoSim }: any) {
+function SoundSettings({ onBack, voice, onVoice, intro, onIntro, outro, onOutro, onToast, onTest, onPreview, volume, onVolume, repeat, onRepeat, autoSim, onAutoSim }: any) {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const [recording, setRecording] = useState(false);
+  const [recTarget, setRecTarget] = useState<string | null>(null);
   const recTimer = React.useRef<any>(null);
-  const pick = async () => { try { const res = await pickIntroAudio(); if (!res) return; if (res.duration && res.duration > 5.5) { onToast("Audio intro maksimal 5 detik"); return; } onIntro({ uri: res.uri, name: res.name }); onToast("Audio intro tersimpan"); } catch { onToast("Gagal memilih audio"); } };
-  const stopRec = async () => { if (recTimer.current) { clearTimeout(recTimer.current); recTimer.current = null; } try { await recorder.stop(); } catch {} try { await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }); } catch {} setRecording(false); const uri = recorder.uri; if (uri) { onIntro({ uri, name: "Rekaman intro" }); onToast("Intro rekaman tersimpan"); } };
-  const startRec = async () => { try { const perm = await AudioModule.requestRecordingPermissionsAsync(); if (!perm.granted) { onToast("Izin mikrofon diperlukan untuk merekam"); if (perm.canAskAgain === false) Linking.openSettings(); return; } await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true }); await recorder.prepareToRecordAsync(); recorder.record(); setRecording(true); recTimer.current = setTimeout(() => { stopRec(); }, 5000); } catch { onToast("Gagal merekam audio"); setRecording(false); } };
+  const setFor = (t: string) => (t === "intro" ? onIntro : onOutro);
+  const label = (t: string) => (t === "intro" ? "Intro" : "Outro");
+  const pick = async (t: string) => { try { const res = await pickIntroAudio(); if (!res) return; if (res.duration && res.duration > 5.5) { onToast(`Audio ${label(t).toLowerCase()} maksimal 5 detik`); return; } setFor(t)({ uri: res.uri, name: res.name }); onToast(`Audio ${label(t).toLowerCase()} tersimpan`); } catch { onToast("Gagal memilih audio"); } };
+  const stopRec = async () => { const t = recTarget; if (recTimer.current) { clearTimeout(recTimer.current); recTimer.current = null; } try { await recorder.stop(); } catch {} try { await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }); } catch {} setRecTarget(null); const uri = recorder.uri; if (uri && t) { setFor(t)({ uri, name: `Rekaman ${label(t).toLowerCase()}` }); onToast(`${label(t)} rekaman tersimpan`); } };
+  const startRec = async (t: string) => { try { const perm = await AudioModule.requestRecordingPermissionsAsync(); if (!perm.granted) { onToast("Izin mikrofon diperlukan untuk merekam"); if (perm.canAskAgain === false) Linking.openSettings(); return; } await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true }); await recorder.prepareToRecordAsync(); recorder.record(); setRecTarget(t); recTimer.current = setTimeout(() => { stopRec(); }, 5000); } catch { onToast("Gagal merekam audio"); setRecTarget(null); } };
   const vols = [{ k: "Pelan", v: 0.4 }, { k: "Sedang", v: 0.7 }, { k: "Keras", v: 1 }];
+  const clip = (t: string) => (t === "intro" ? intro : outro);
+  const defWord = (t: string) => (t === "intro" ? "Sukses" : "Terima Kasih");
+  const audioSection = (t: string) => <View style={styles.introCard}><View style={styles.introRow}><View style={styles.testPayIcon}><Icon name="musical-notes" color="#fff" size={18} /></View><View style={styles.transactionMain}><Text style={styles.menuLabel} numberOfLines={1}>{clip(t) ? clip(t).name : `Default — "${defWord(t)}"`}</Text><Text style={styles.muted}>{clip(t) ? `${label(t)} custom aktif` : `Upload atau rekam ${label(t).toLowerCase()} sendiri`}</Text></View></View><View style={styles.introBtns}><Pressable testID={`pick-${t}`} onPress={() => pick(t)} style={({ pressed }) => [styles.introBtn, pressed && styles.pressed]}><Icon name="cloud-upload-outline" color={C.navy} size={16} /><Text style={styles.introBtnText}>{clip(t) ? "Ganti" : "Pilih file"}</Text></Pressable><Pressable testID={`record-${t}`} onPress={() => recTarget === t ? stopRec() : startRec(t)} style={({ pressed }) => [styles.introBtn, recTarget === t && styles.recActive, pressed && styles.pressed]}><Icon name={recTarget === t ? "stop" : "mic-outline"} color={recTarget === t ? "#fff" : C.red} size={16} /><Text style={[styles.introBtnText, recTarget === t && { color: "#fff" }]}>{recTarget === t ? "Stop" : "Rekam"}</Text></Pressable>{clip(t) ? <Pressable testID={`remove-${t}`} onPress={() => { setFor(t)(null); onToast(`${label(t)} dihapus`); }} style={({ pressed }) => [styles.introBtn, pressed && styles.pressed]}><Icon name="trash-outline" color={C.red} size={16} /><Text style={[styles.introBtnText, { color: C.red }]}>Hapus</Text></Pressable> : null}</View></View>;
   return <View style={styles.flex}><Header title="Suara pembayaran" onBack={onBack} /><ScrollView contentContainerStyle={styles.page}>
-    <Text style={styles.pageIntro}>Saat pembayaran masuk: audio intro kamu diputar dulu, lalu nominal disebutkan otomatis.</Text>
+    <Text style={styles.pageIntro}>Saat pembayaran berhasil: intro diputar dulu, lalu nominal disebut otomatis, ditutup outro.</Text>
     <Text style={styles.filterLabel}>Suara penyebutan nominal</Text>
-    <View style={styles.segment}>{["wanita", "pria"].map((g) => <Pressable testID={`voice-${g}`} key={g} onPress={() => onVoice(g)} style={[styles.segmentItem, voice === g && styles.segmentActive]}><Icon name={g === "wanita" ? "female" : "male"} color={voice === g ? "#fff" : C.navy} size={16} /><Text style={[styles.segmentText, voice === g && styles.segmentTextActive]}>{g === "wanita" ? "Wanita" : "Pria"}</Text></Pressable>)}</View>
+    {VOICE_CHARS.map((vc) => <Pressable testID={`voice-${vc.id}`} key={vc.id} onPress={() => onVoice(vc.id)} style={[styles.voiceCard, voice === vc.id && styles.voiceCardActive]}><View style={[styles.voiceAvatar, voice === vc.id && styles.voiceAvatarActive]}><Icon name="person" color={voice === vc.id ? "#fff" : C.navy} size={18} /></View><View style={styles.transactionMain}><Text style={styles.menuLabel}>{vc.name}{vc.id === "putri" ? "  · Default" : ""}</Text><Text style={styles.muted}>{vc.desc}</Text></View>{voice === vc.id ? <Icon name="checkmark-circle" color={C.teal} size={22} /> : <View style={styles.voiceRadio} />}</Pressable>)}
     <Text style={styles.filterLabel}>Volume suara</Text>
     <View style={styles.segment}>{vols.map((o) => <Pressable testID={`vol-${o.k}`} key={o.k} onPress={() => onVolume(o.v)} style={[styles.segmentItem, Math.abs(volume - o.v) < 0.01 && styles.segmentActive]}><Text style={[styles.segmentText, Math.abs(volume - o.v) < 0.01 && styles.segmentTextActive]}>{o.k}</Text></Pressable>)}</View>
     <View style={styles.toggleRow}><View style={styles.transactionMain}><Text style={styles.menuLabel}>Ulangi nominal 2×</Text><Text style={styles.muted}>Nominal disebut dua kali berturut-turut</Text></View><Toggle testID="toggle-repeat" value={repeat} onValue={onRepeat} /></View>
     <View style={styles.toggleRow}><View style={styles.transactionMain}><Text style={styles.menuLabel}>Auto-simulasi pembayaran</Text><Text style={styles.muted}>Buat pembayaran masuk otomatis tiap 15 dtk</Text></View><Toggle testID="toggle-autosim" value={autoSim} onValue={onAutoSim} /></View>
     <Text style={styles.filterLabel}>Audio intro (maks 5 detik)</Text>
-    <View style={styles.introCard}><View style={styles.introRow}><View style={styles.testPayIcon}><Icon name="musical-notes" color="#fff" size={18} /></View><View style={styles.transactionMain}><Text style={styles.menuLabel} numberOfLines={1}>{intro ? intro.name : "Belum ada intro"}</Text><Text style={styles.muted}>{intro ? "Intro custom aktif" : "Upload atau rekam intro sendiri"}</Text></View></View>
-      <View style={styles.introBtns}><Pressable testID="pick-intro" onPress={pick} style={({ pressed }) => [styles.introBtn, pressed && styles.pressed]}><Icon name="cloud-upload-outline" color={C.navy} size={16} /><Text style={styles.introBtnText}>{intro ? "Ganti" : "Pilih file"}</Text></Pressable>
-      <Pressable testID="record-intro" onPress={() => recording ? stopRec() : startRec()} style={({ pressed }) => [styles.introBtn, recording && styles.recActive, pressed && styles.pressed]}><Icon name={recording ? "stop" : "mic-outline"} color={recording ? "#fff" : C.red} size={16} /><Text style={[styles.introBtnText, recording && { color: "#fff" }]}>{recording ? "Stop" : "Rekam"}</Text></Pressable>
-      <Pressable testID="preview-intro" disabled={!intro} onPress={() => intro && previewIntro(intro.uri, volume)} style={({ pressed }) => [styles.introBtn, !intro && styles.dynBtnDisabled, pressed && styles.pressed]}><Icon name="play" color={C.navy} size={16} /><Text style={styles.introBtnText}>Preview</Text></Pressable>
-      {intro ? <Pressable testID="remove-intro" onPress={() => { onIntro(null); onToast("Intro dihapus"); }} style={({ pressed }) => [styles.introBtn, pressed && styles.pressed]}><Icon name="trash-outline" color={C.red} size={16} /><Text style={[styles.introBtnText, { color: C.red }]}>Hapus</Text></Pressable> : null}</View>
-    </View>
-    <Pressable testID="test-payment-settings" onPress={onTest} style={({ pressed }) => [styles.dynBtn, pressed && styles.pressed]}><Icon name="notifications" color={C.navy} size={18} /><Text style={styles.dynBtnText}>Test suara pembayaran</Text></Pressable>
-    <Text style={styles.soundNote}>Suara nominal memakai TTS OpenAI (Emergent) — bahasa Indonesia terdengar jelas namun sedikit beraksen. Rekam/putar audio paling andal di perangkat lewat Expo Go.</Text>
+    {audioSection("intro")}
+    <Text style={styles.filterLabel}>Audio outro (maks 5 detik)</Text>
+    {audioSection("outro")}
+    <Pressable testID="preview-sound" onPress={onPreview} style={({ pressed }) => [styles.dynBtn, pressed && styles.pressed]}><Icon name="play" color={C.navy} size={18} /><Text style={styles.dynBtnText}>Preview Suara</Text></Pressable>
+    <Pressable testID="test-payment-settings" onPress={onTest} style={({ pressed }) => [styles.introBtnWide, pressed && styles.pressed]}><Icon name="notifications-outline" color={C.navy} size={17} /><Text style={styles.introBtnText}>Test pembayaran (masuk ke Riwayat)</Text></Pressable>
+    <Text style={styles.soundNote}>Urutan: Intro → Nominal → Outro dengan jeda minimal agar terdengar natural. Suara nominal memakai TTS OpenAI (Emergent) — bahasa Indonesia jelas namun sedikit beraksen. Rekam/putar audio paling andal di perangkat lewat Expo Go.</Text>
   </ScrollView></View>;
 }
 function Toast({ text }: any) { if (!text) return null; return <View pointerEvents="none" style={styles.toast}><Icon name="checkmark-circle" color={C.teal} size={18} /><Text style={styles.toastText}>{text}</Text></View>; }

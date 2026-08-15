@@ -19,7 +19,38 @@ export function terbilang(input: number): string {
   return terbilang(Math.floor(n / 1000000000)) + " miliar" + (n % 1000000000 ? " " + terbilang(n % 1000000000) : "");
 }
 
-function playSource(uri: string, maxMs = 15000, volume = 1): Promise<void> {
+// Voice characters for nominal announcement (mapped to distinct voices on backend).
+export const VOICE_CHARS = [
+  { id: "lilis", name: "Teh Lilis", desc: "Logat Sunda · ramah & hangat" },
+  { id: "parjo", name: "Mas Parjo", desc: "Logat Jawa · santai & familiar" },
+  { id: "bagas", name: "Kak Bagas", desc: "Indonesia · muda & energik" },
+  { id: "putri", name: "Kak Putri", desc: "Indonesia · jelas & ramah" },
+];
+
+const ttsCache: Record<string, string> = {};
+
+async function generateTts(text: string, voice: string): Promise<string | null> {
+  const cacheKey = `${voice}|${text}`;
+  if (ttsCache[cacheKey]) return ttsCache[cacheKey];
+  try {
+    const res = await fetch(`${BACKEND}/api/tts/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice }),
+    });
+    const data = await res.json();
+    if (data && data.url) {
+      const full = `${BACKEND}${data.url}`;
+      ttsCache[cacheKey] = full;
+      return full;
+    }
+  } catch {}
+  return null;
+}
+
+// Play a single audio segment. Resolves on natural finish (didJustFinish) OR when maxMs cap
+// is reached (so 3s/5s custom clips never force extra silence). A tiny gap keeps it natural.
+function playSegment(uri: string, maxMs: number, volume: number, gapMs = 140): Promise<void> {
   return new Promise((resolve) => {
     let player: any;
     let done = false;
@@ -29,7 +60,7 @@ function playSource(uri: string, maxMs = 15000, volume = 1): Promise<void> {
       done = true;
       try { sub && sub.remove(); } catch {}
       try { player && player.remove(); } catch {}
-      resolve();
+      setTimeout(resolve, gapMs);
     };
     try {
       player = createAudioPlayer({ uri });
@@ -46,28 +77,56 @@ function playSource(uri: string, maxMs = 15000, volume = 1): Promise<void> {
   });
 }
 
-export async function previewIntro(uri: string, volume = 1) {
+export type AnnounceOpts = {
+  amount: number;
+  voiceChar?: string;
+  intro?: { uri: string; max: number } | null; // custom intro clip, else default TTS "Sukses"
+  outro?: { uri: string; max: number } | null; // custom outro clip, else default TTS "Terima kasih"
+  volume?: number;
+  repeat?: boolean;
+};
+
+// Modular announcement: INTRO -> NOMINAL -> OUTRO with minimal gap.
+// TTS segments are fetched in parallel up-front (and cached) for low latency; playback is
+// strictly sequential so segments never overlap or get cut off. Failed segments are skipped.
+export async function announcePayment(opts: AnnounceOpts) {
+  const voiceChar = opts.voiceChar || "putri";
+  const volume = opts.volume ?? 1;
+  const useIntroTts = !opts.intro;
+  const useOutroTts = !opts.outro;
+  const nominalText = `${terbilang(opts.amount)} rupiah`;
+
   await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-  await playSource(uri, 6000, volume);
+
+  const [introUrl, nominalUrl, outroUrl] = await Promise.all([
+    useIntroTts ? generateTts("Sukses", voiceChar) : Promise.resolve(null),
+    generateTts(nominalText, voiceChar),
+    useOutroTts ? generateTts("Terima kasih", voiceChar) : Promise.resolve(null),
+  ]);
+
+  // INTRO
+  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 5000, volume);
+  else if (introUrl) await playSegment(introUrl, 8000, volume);
+
+  // NOMINAL (dynamic, optionally repeated)
+  const times = opts.repeat ? 2 : 1;
+  for (let i = 0; i < times; i++) { if (nominalUrl) await playSegment(nominalUrl, 15000, volume); }
+
+  // OUTRO
+  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 5000, volume);
+  else if (outroUrl) await playSegment(outroUrl, 8000, volume);
 }
 
-export async function playPaymentSound(opts: { amount: number; voice: string; introUri?: string | null; volume?: number; repeat?: boolean }) {
-  const vol = opts.volume ?? 1;
-  await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-  if (opts.introUri) await playSource(opts.introUri, 6000, vol);
-  const text = `Pembayaran ${terbilang(opts.amount)} rupiah diterima`;
-  try {
-    const res = await fetch(`${BACKEND}/api/tts/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, voice: opts.voice }),
-    });
-    const data = await res.json();
-    if (data && data.url) {
-      const times = opts.repeat ? 2 : 1;
-      for (let i = 0; i < times; i++) await playSource(`${BACKEND}${data.url}`, 15000, vol);
-    }
-  } catch {}
+export async function previewAnnouncement(opts: Omit<AnnounceOpts, "amount">) {
+  await announcePayment({ ...opts, amount: 50000 });
+}
+
+export async function pickIntroAudio(): Promise<{ uri: string; name: string; duration: number } | null> {
+  const result = await DocumentPicker.getDocumentAsync({ type: "audio/*", copyToCacheDirectory: true, multiple: false });
+  if (result.canceled || !result.assets || !result.assets[0]) return null;
+  const asset = result.assets[0];
+  const duration = await getDuration(asset.uri);
+  return { uri: asset.uri, name: asset.name || "audio.mp3", duration };
 }
 
 function getDuration(uri: string): Promise<number> {
@@ -93,12 +152,4 @@ function getDuration(uri: string): Promise<number> {
     });
     setTimeout(() => finish(0), 4000);
   });
-}
-
-export async function pickIntroAudio(): Promise<{ uri: string; name: string; duration: number } | null> {
-  const result = await DocumentPicker.getDocumentAsync({ type: "audio/*", copyToCacheDirectory: true, multiple: false });
-  if (result.canceled || !result.assets || !result.assets[0]) return null;
-  const asset = result.assets[0];
-  const duration = await getDuration(asset.uri);
-  return { uri: asset.uri, name: asset.name || "intro.mp3", duration };
 }
