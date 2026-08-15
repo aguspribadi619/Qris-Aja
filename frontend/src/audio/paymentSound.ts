@@ -113,7 +113,7 @@ export async function announcePayment(opts: AnnounceOpts) {
   ]);
 
   // INTRO
-  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 5000, volume);
+  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 3000, volume);
   else if (introUrl) await playSegment(introUrl, 8000, volume);
 
   // NOMINAL (dynamic, optionally repeated)
@@ -121,7 +121,7 @@ export async function announcePayment(opts: AnnounceOpts) {
   for (let i = 0; i < times; i++) { if (nominalUrl) await playSegment(nominalUrl, 15000, volume); }
 
   // OUTRO
-  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 5000, volume);
+  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 3000, volume);
   else if (outroUrl) await playSegment(outroUrl, 8000, volume);
 }
 
