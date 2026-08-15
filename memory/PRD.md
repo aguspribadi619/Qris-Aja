@@ -1,44 +1,33 @@
-# QRIS Aja — Product Requirements
+# PRD — QRIS Aja (Prototype)
 
-## Problem statement
-Prototipe aplikasi mobile merchant QRIS untuk UMKM yang membantu pemilik toko memantau saldo, membuat QRIS statis/dinamis, melihat transaksi, memahami analisa performa, dan mengelola pegawai dengan alur yang mudah serta konsisten.
+## Problem Statement
+Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS untuk UMKM Indonesia. Semua data dummy/hardcoded, tanpa backend/database. Fokus pada spacing rapi, radius/warna konsisten, transisi mulus, dan usability merchant.
 
 ## Architecture
-- Expo SDK 54 / React Native frontend dengan Expo Router.
-- State lokal React untuk prototipe; transaksi, saldo, analisa, notifikasi, outlet, dan pegawai adalah data dummy sesuai brief.
-- Backend FastAPI/MongoDB starter tetap tersedia, tetapi tidak dipakai karena scope meminta prototipe tanpa backend nyata.
+- Frontend: Expo (React Native) + Expo Router, single-file app di `/app/frontend/app/index.tsx`.
+- State lokal (useState/useMemo). Tanpa backend/DB (sesuai permintaan prototype).
+- Design tokens: `/app/design_guidelines.json`.
 
-## User personas
-- Pemilik UMKM/merchant yang membutuhkan akses QRIS cepat saat operasional.
-- Supervisor toko yang memantau omzet dan mengatur pegawai lintas outlet.
+## User Persona
+- Pemilik/manajer merchant UMKM (mis. Agus, KSM Management) mengelola beberapa outlet warkop.
 
-## Core requirements (static)
-- Beranda fokus pada saldo, QRIS, transaksi terakhir, outlet, dan quick actions.
-- FAB QRIS membuka pilihan QRIS Statis dan QRIS Dinamis.
-- Riwayat dengan filter status.
-- Analisa dengan insight, statistik, chart jam ramai, dan outlet teratas.
-- Profil dan Kelola Pegawai dengan tambah, edit, hapus, outlet, role, dan validasi nama.
-- Notifikasi in-app berbahasa Indonesia dan panduan suara pembayaran.
-- Tidak ada Kasir sebagai modul transaksi dan tidak ada PPOB.
+## Core Requirements (static)
+- Data dummy sepenuhnya.
+- Bahasa Indonesia di seluruh UI.
+- UI polish: spacing, warna, ikon "hidup".
 
-## Implemented (2026-08-15)
-- Dashboard QRIS Aja dengan tema navy/teal/gold, saldo hide/show, selector outlet, quick actions, promo carousel, dan transaksi terakhir.
-- Navigasi Beranda, Riwayat, Analisa, Profil, serta FAB QRIS.
-- Modal QRIS statis/dinamis dan panel notifikasi Bahasa Indonesia.
-- Filter Riwayat Semua/Berhasil/Menunggu.
-- Analisa dengan insight, stat cards, bar chart, dan outlet paling ramai.
-- Profil merchant dan Kelola Pegawai CRUD lokal dengan validasi dan role.
-- Bottom-sheet QRIS dan pegawai sudah dibatasi tinggi serta dapat di-scroll pada layar kecil.
-- Lint dan verifikasi preview berhasil.
+## Implemented (with dates)
+- 2026-06: MVP — Dashboard, Riwayat, Analisa, Profil (4 tab + FAB QRIS).
+- 2026-06: Employee CRUD (tambah/edit/hapus, role Kasir/Supervisor).
+- 2026-06: Modal QRIS statis/dinamis, notifikasi, pemilih outlet, toggle saldo.
+- 2026-06: Perbaikan viewport bottom-sheet untuk layar kecil.
+- 2026-06: Hapus label "3M: Membantu Mudah".
+- 2026-08: Ikon berwarna + desain "hidup" (badge terisi, bayangan lembut, aksen spark). Fix style `badgeInner`/`badgeSpark` yang sebelumnya belum didefinisikan.
 
-## Prioritized backlog
-- P0: Integrasi provider QRIS nyata dan status pembayaran real-time.
-- P1: Push notification native dengan pengaturan suara per outlet.
-- P1: Persistensi akun, outlet, dan pegawai melalui backend.
-- P2: Export laporan transaksi nyata dan filter tanggal.
-- P2: Onboarding merchant dan pengujian usability dengan merchant UMKM.
+## Backlog
+- P1: Riwayat — export CSV simulasi, filter tanggal, search.
+- P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.
+- P2: State kosong/error/retry lebih lengkap di tiap tab.
 
-## Next tasks
-1. Validasi desain dengan beberapa pemilik UMKM.
-2. Tentukan provider QRIS dan kontrak status transaksi.
-3. Ganti state dummy dengan endpoint aman setelah model data disepakati.
+## Next Tasks
+- Menunggu feedback user atas polish ikon terbaru.
