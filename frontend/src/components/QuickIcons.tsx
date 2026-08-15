@@ -162,6 +162,38 @@ function Cash({ size = 44 }: Props) {
   );
 }
 
+function Sukses({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Circle cx="24" cy="24" r="15" fill="#17C3A2" />
+      <Path d="M16.5 24.5 L21.5 29.5 L31.5 19" stroke="#ffffff" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="19" cy="18" r="2.4" fill="#ffffff" opacity="0.3" />
+    </Svg>
+  );
+}
+
+function Tips({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path d="M9 12 l2.4 2.4 M39 12 l-2.4 2.4 M24 5 v3" stroke="#F2A93C" strokeWidth="2.2" strokeLinecap="round" />
+      <Circle cx="24" cy="20" r="10" fill="#FBBF24" />
+      <Rect x="20" y="27" width="8" height="5" rx="1.5" fill="#E0932F" />
+      <Rect x="21" y="32" width="6" height="3.2" rx="1.5" fill="#16204A" />
+      <Path d="M24 15 v6 M21 22.5 h6" stroke="#ffffff" strokeWidth="1.8" opacity="0.85" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function Suara({ size = 44 }: Props) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path d="M9 20 h6 l7 -6 v20 l-7 -6 h-6 Z" fill="#16204A" />
+      <Path d="M27 18 a8 8 0 0 1 0 12" stroke="#17C3A2" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+      <Path d="M31 13 a14 14 0 0 1 0 22" stroke="#F2A93C" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 const MAP: Record<string, React.FC<Props>> = {
   analisa: Analisa,
   pegawai: Pegawai,
@@ -175,6 +207,9 @@ const MAP: Record<string, React.FC<Props>> = {
   transaksi: Transaksi,
   qris: Qris,
   cash: Cash,
+  sukses: Sukses,
+  tips: Tips,
+  suara: Suara,
 };
 
 export function QuickArt({ name, size = 44 }: { name: string; size?: number }) {
