@@ -32,6 +32,8 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 - 2026-08: 4 fitur baru — (1) Ringkasan harian (omzet & jumlah transaksi hari ini) di atas dashboard; (2) Ekspor CSV riwayat (tombol + toast konfirmasi); (3) Kartu QRIS statis siap cetak (QrisPrintModal, tombol Cetak/Bagikan) dibuka dari opsi QRIS Statis; (4) Tandai notifikasi dibaca per-item + "Tandai semua", badge unread kini derivatif dari state notifications. Tambah komponen Toast global.
 - 2026-08: Header (hero) diperpendek (minHeight 156) & logo dibuat mepet kiri (paddingHorizontal 16, marginLeft -2).
 - 2026-08: Filter tanggal (Periode: Hari ini/Minggu ini/Bulan ini) + label Status di Riwayat. Alur QRIS Dinamis (QrisDynamicModal): input nominal + chip cepat → tampil QR dengan nominal, tombol Tandai lunas & Ubah nominal.
+- 2026-08: Grafik perbandingan omzet antar outlet (bar horizontal) di halaman Analisa.
+- 2026-08: Fitur suara notifikasi pembayaran. Backend: `/api/tts/generate` + `/api/tts/{key}.mp3` pakai Emergent OpenAI TTS (emergentintegrations, tts-1, voice nova/onyx = wanita/pria), cache Mongo `tts_audio`, EMERGENT_LLM_KEY di backend/.env. Frontend: `src/audio/paymentSound.ts` (terbilang + playback sekuensial intro→TTS via expo-audio, upload intro via expo-document-picker, validasi maks 5 dtk). Halaman "Suara pembayaran" di Profil + tombol "Test pembayaran masuk" di Beranda & Pengaturan. Audio/upload paling andal di perangkat (Expo Go).
 
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.

@@ -1,14 +1,17 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import hashlib
+import base64
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from emergentintegrations.llm.openai import OpenAITextToSpeech
 
 
 ROOT_DIR = Path(__file__).parent
@@ -24,6 +27,45 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# Text-to-Speech engine (Emergent managed OpenAI TTS)
+tts_engine = OpenAITextToSpeech(api_key=os.environ.get('EMERGENT_LLM_KEY'))
+VOICE_MAP = {"pria": "onyx", "wanita": "nova"}
+
+
+class TTSRequest(BaseModel):
+    text: str
+    voice: str = "wanita"
+
+
+@api_router.post("/tts/generate")
+async def generate_tts(req: TTSRequest):
+    voice = VOICE_MAP.get(req.voice, "nova")
+    text = (req.text or "").strip()[:500]
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+    key = hashlib.sha256(f"{text}|{voice}|tts-1".encode()).hexdigest()
+    existing = await db.tts_audio.find_one({"key": key})
+    if not existing:
+        audio_bytes = await tts_engine.generate_speech(text=text, model="tts-1", voice=voice)
+        await db.tts_audio.insert_one({
+            "key": key,
+            "b64": base64.b64encode(audio_bytes).decode(),
+            "created": datetime.now(timezone.utc).isoformat(),
+        })
+    return {"url": f"/api/tts/{key}.mp3"}
+
+
+@api_router.get("/tts/{key}.mp3")
+async def get_tts(key: str):
+    doc = await db.tts_audio.find_one({"key": key})
+    if not doc:
+        raise HTTPException(status_code=404, detail="audio not found")
+    return Response(
+        content=base64.b64decode(doc["b64"]),
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=31536000"},
+    )
 
 
 # Define Models
