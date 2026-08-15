@@ -31,7 +31,7 @@ api_router = APIRouter(prefix="/api")
 # Text-to-Speech engine (Emergent managed OpenAI TTS)
 tts_engine = OpenAITextToSpeech(api_key=os.environ.get('EMERGENT_LLM_KEY'))
 TTS_MODEL = "tts-1-hd"          # higher quality = clearer pronunciation
-TTS_SPEED = 0.94                # slightly slower for clarity on Indonesian words
+TTS_SPEED = 0.82                # slower tempo for clearer, less rushed Indonesian speech
 VOICE_MAP = {"pria": "onyx", "wanita": "nova", "putri": "nova", "bagas": "ash", "parjo": "onyx", "lilis": "coral"}
 
 
