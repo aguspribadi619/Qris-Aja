@@ -1,0 +1,51 @@
+{
+  "summary": "ElevenLabs TTS migration verified end-to-end. Backend: 14/14 pytest cases pass on mobile viewport 390x844 (~10s). POST /api/tts/generate returns valid mp3 for putri/lilis/parjo/bagas via eleven_multilingual_v2 with 4 DISTINCT sha256 cache keys (voice_ids: EXAVITQu4vr4xnSDxMaL / JBFqnCBsd6RMkjVDRZzb / TX3LPaxmHKxFdv7VOQHJ / Xb7hH8MSUJpSbSDYk0k2). GET /api/tts/{key}.mp3 serves audio/mpeg with non-empty bytes (>500B) and Cache-Control 1yr. Idempotent caching, unknown key -> 404, empty/whitespace text -> 400. Long Indonesian sentence 'Pembayaran lima puluh ribu rupiah berhasil, terima kasih' generates successfully for all 4 voices. Frontend: 29/29 UI checks pass. Home hero shows new barista background image + QRIS Aja logo + 'Selamat pagi, Agus 👋' stacked left (no crash, image renders). Profil -> Suara pembayaran opens with 4 voice cards + photo avatars; Kak Putri is default (checkmark + 'Default' badge). Tapping test-voice-lilis toggles label to 'Memutar' with spinner; only one plays at a time; reverts to 'Tes' after playback. Selecting voice-lilis moves the checkmark to Teh Lilis. Volume segments vol-Pelan/Sedang/Keras selectable; toggle-repeat and toggle-autosim work. Both intro & outro sections show 'maks 3 detik' label; pick-intro/record-intro/pick-outro/record-outro render and are interactive. preview-sound and test-payment-settings both fire; test payment adds a transaction visible in Riwayat. No red-screen errors, no pageerror events. Pre-existing deprecation warnings (shadow*, pointerEvents) unchanged and non-blocking.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (React Native Web)", "issues": [
+        "Console still warns: 'shadow*' style props are deprecated — use boxShadow (unchanged from iteration_3).",
+        "Console still warns: props.pointerEvents is deprecated — use style.pointerEvents (Toast in index.tsx, unchanged from iteration_3)."
+      ]}
+    ],
+    "react_native_issues": [
+      {"component": "Toast", "issue": "Uses deprecated prop pointerEvents; migrate to style.pointerEvents. Reference: /app/frontend/app/index.tsx (Toast component)."},
+      {"component": "StyleSheet shadow*", "issue": "Deprecated shadowColor/shadowOpacity/shadowRadius/shadowOffset used across multiple style blocks; migrate to boxShadow for RN Web while keeping native compatibility. Reference: /app/frontend/app/index.tsx (styles.outletPill, balanceCard, actionTile, badge, badgeInner, fab)."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tts.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/screens/home_hero.jpeg",
+    "/app/test_reports/screens/memutar.jpeg",
+    "/app/test_reports/screens/lilis_selected.jpeg",
+    "/app/test_reports/screens/riwayat.jpeg"
+  ],
+  "action_items": [
+    "Optional cleanup (carry-over): replace deprecated shadow* style props with boxShadow (RN Web) and pointerEvents prop with style.pointerEvents on Toast.",
+    "No blocking issues detected for this ElevenLabs migration round."
+  ],
+  "critical_code_review_comments": [
+    "server.py cleanly switched to elevenlabs client with eleven_multilingual_v2; EL_VOICE_MAP has 4 distinct voice_ids for lilis/parjo/bagas/putri and legacy pria/wanita aliases retained; cache key = sha256(text|voice_id|model) so migration invalidated old OpenAI cache (expected) and new keys are distinct per voice (confirmed by test_distinct_voices_produce_distinct_keys).",
+    "Unused import remains: `from emergentintegrations.llm.openai import OpenAITextToSpeech` — safe to remove (minor cleanup, non-blocking).",
+    "ELEVENLABS_API_KEY read via os.environ.get() at import time and passed to ElevenLabs(); consider validating presence at startup with a clear error if missing (currently would fail on first request).",
+    "Response uses base64 store in Mongo (tts_audio collection) with Cache-Control: public, max-age=31536000; no MongoDB _id leakage in either endpoint.",
+    "Frontend index.tsx renders HEADER_BG image absolutely filling the hero and stacks QRIS Aja logo + welcome text on top — verified visually. LOGO uses uri source; heroBg local asset.",
+    "CHAR_IMG static require() mapping intact; per-character test button correctly toggles between <ActivityIndicator/> 'Memutar' and <Icon 'play'/> 'Tes' driven by playingVoice state; only one plays at a time as observed.",
+    "'maks 3 detik' constraint is enforced by paymentSound helpers (import path /app/frontend/src/audio/paymentSound.ts) and the label 'Audio intro (maks 3 detik)' / 'Audio outro (maks 3 detik)' is present in the UI.",
+    "Uses expo-audio (not deprecated expo-av); no deprecated Expo packages detected."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_tts.py (updated distinct-voice comment to ElevenLabs voice_ids; added parametrized test_long_sentence_generates_successfully for all 4 voices)",
+    "/app/test_reports/pytest/pytest_results.xml (regenerated)",
+    "/app/test_reports/iteration_4.json (new)"
+  ],
+  "success_rate": {"backend": "100% (14/14)", "frontend": "100% (29/29 UI checks)"},
+  "seed_data_creation": "Backend tts_audio cache rows inserted for sample text 'lima puluh ribu rupiah', 'cache probe', Lilis Sundanese greeting, and long sentence 'Pembayaran lima puluh ribu rupiah berhasil, terima kasih' across all 4 voice_ids. UI test appended one in-memory Rp transaction via test-payment-settings (visible in Riwayat).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_tts.py (14 tests, ~10s). ElevenLabs quota is finite — if future runs hit 401/429 on POST /api/tts/generate, treat as an external limit note (not a code bug) and verify voice_ids/model still match server.py. Audio playback in headless Chromium cannot be aurally validated; UI checks focus on state transitions (Memutar spinner), avatar images, checkmark movement, and transaction insertion. Bottom nav: nav-Beranda/nav-Riwayat/nav-Analisa/nav-Profil. Deprecation warnings (shadow*, pointerEvents) are pre-existing and non-blocking.",
+  "rca_of_issue": "N/A — no blocking bugs found. ElevenLabs migration is functioning as specified: 4 distinct voice_ids, eleven_multilingual_v2 model, per-character 'Memutar' indicator, barista header background, maks 3 detik intro/outro labels."
+}

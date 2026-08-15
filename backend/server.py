@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime, timezone
-from emergentintegrations.llm.openai import OpenAITextToSpeech
+from elevenlabs import ElevenLabs
 
 
 ROOT_DIR = Path(__file__).parent
@@ -28,28 +28,43 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Text-to-Speech engine (Emergent managed OpenAI TTS)
-tts_engine = OpenAITextToSpeech(api_key=os.environ.get('EMERGENT_LLM_KEY'))
-TTS_MODEL = "tts-1-hd"          # higher quality = clearer pronunciation
-TTS_SPEED = 0.82                # slower tempo for clearer, less rushed Indonesian speech
-VOICE_MAP = {"pria": "onyx", "wanita": "nova", "putri": "nova", "bagas": "ash", "parjo": "onyx", "lilis": "coral"}
+# Text-to-Speech engine — ElevenLabs (natural Indonesian via eleven_multilingual_v2).
+# Each persona maps to a distinct ElevenLabs voice so characters sound different.
+el_client = ElevenLabs(api_key=os.environ.get('ELEVENLABS_API_KEY'))
+EL_MODEL = "eleven_multilingual_v2"
+EL_VOICE_MAP = {
+    "lilis": "EXAVITQu4vr4xnSDxMaL",   # Sarah  - warm, reassuring female
+    "parjo": "JBFqnCBsd6RMkjVDRZzb",   # George - warm, mature male storyteller
+    "bagas": "TX3LPaxmHKxFdv7VOQHJ",   # Liam   - energetic young male
+    "putri": "Xb7hH8MSUJpSbSDYk0k2",   # Alice  - clear, engaging female
+    # legacy aliases
+    "pria": "JBFqnCBsd6RMkjVDRZzb",
+    "wanita": "Xb7hH8MSUJpSbSDYk0k2",
+}
+EL_DEFAULT_VOICE = "Xb7hH8MSUJpSbSDYk0k2"
 
 
 class TTSRequest(BaseModel):
     text: str
-    voice: str = "wanita"
+    voice: str = "putri"
 
 
 @api_router.post("/tts/generate")
 async def generate_tts(req: TTSRequest):
-    voice = VOICE_MAP.get(req.voice, "nova")
+    voice_id = EL_VOICE_MAP.get(req.voice, EL_DEFAULT_VOICE)
     text = (req.text or "").strip()[:500]
     if not text:
         raise HTTPException(status_code=400, detail="text is required")
-    key = hashlib.sha256(f"{text}|{voice}|{TTS_MODEL}|{TTS_SPEED}".encode()).hexdigest()
+    key = hashlib.sha256(f"{text}|{voice_id}|{EL_MODEL}".encode()).hexdigest()
     existing = await db.tts_audio.find_one({"key": key})
     if not existing:
-        audio_bytes = await tts_engine.generate_speech(text=text, model=TTS_MODEL, voice=voice, speed=TTS_SPEED)
+        audio_stream = el_client.text_to_speech.convert(
+            text=text,
+            voice_id=voice_id,
+            model_id=EL_MODEL,
+            output_format="mp3_44100_128",
+        )
+        audio_bytes = b"".join(audio_stream)
         await db.tts_audio.insert_one({
             "key": key,
             "b64": base64.b64encode(audio_bytes).decode(),

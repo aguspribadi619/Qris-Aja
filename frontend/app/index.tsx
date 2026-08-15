@@ -228,7 +228,7 @@ function SoundSettings({ onBack, voice, onVoice, onTestVoice, intro, onIntro, ou
     {audioSection("outro")}
     <Pressable testID="preview-sound" onPress={onPreview} style={({ pressed }) => [styles.dynBtn, pressed && styles.pressed]}><Icon name="play" color={C.navy} size={18} /><Text style={styles.dynBtnText}>Preview Suara</Text></Pressable>
     <Pressable testID="test-payment-settings" onPress={onTest} style={({ pressed }) => [styles.introBtnWide, pressed && styles.pressed]}><Icon name="notifications-outline" color={C.navy} size={17} /><Text style={styles.introBtnText}>Test pembayaran (masuk ke Riwayat)</Text></Pressable>
-    <Text style={styles.soundNote}>Urutan: Intro → Nominal → Outro dengan jeda minimal agar terdengar natural. Volume relatif terhadap volume perangkat (Pelan 30% · Sedang 60% · Keras 100%) — aplikasi tidak bisa melebihi volume HP. Suara nominal memakai TTS OpenAI HD (Emergent), bahasa Indonesia lebih jernih namun tetap sedikit beraksen. Rekam/putar audio paling andal di perangkat lewat Expo Go.</Text>
+    <Text style={styles.soundNote}>Urutan: Intro → Nominal → Outro dengan jeda minimal agar terdengar natural. Volume relatif terhadap volume perangkat (Pelan 30% · Sedang 60% · Keras 100%) — aplikasi tidak bisa melebihi volume HP. Suara memakai ElevenLabs (multilingual) — natural & fasih Bahasa Indonesia, tiap karakter punya suara berbeda. Intro/outro custom (rekam/upload) maksimal 3 detik. Audio paling andal diputar di perangkat lewat Expo Go.</Text>
   </ScrollView></View>;
 }
 function Toast({ text }: any) { if (!text) return null; return <View pointerEvents="none" style={styles.toast}><Icon name="checkmark-circle" color={C.teal} size={18} /><Text style={styles.toastText}>{text}</Text></View>; }

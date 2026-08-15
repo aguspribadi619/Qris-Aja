@@ -55,8 +55,21 @@ class TestTTSGenerate:
             resp = api_client.post(f"{BASE_URL}/api/tts/generate", json={"text": SAMPLE_TEXT, "voice": v}, timeout=60)
             assert resp.status_code == 200
             keys[v] = _extract_key(resp.json()["url"])
-        # putri->nova, lilis->coral, parjo->onyx, bagas->ash — all distinct
+        # ElevenLabs voice_ids: lilis=EXAVITQu4vr4xnSDxMaL, parjo=JBFqnCBsd6RMkjVDRZzb,
+        # bagas=TX3LPaxmHKxFdv7VOQHJ, putri=Xb7hH8MSUJpSbSDYk0k2 — all distinct
         assert len(set(keys.values())) == len(VOICES), f"non-distinct keys per voice: {keys}"
+
+    @pytest.mark.parametrize("voice", VOICES)
+    def test_long_sentence_generates_successfully(self, api_client, voice):
+        text = "Pembayaran lima puluh ribu rupiah berhasil, terima kasih"
+        resp = api_client.post(f"{BASE_URL}/api/tts/generate", json={"text": text, "voice": voice}, timeout=90)
+        assert resp.status_code == 200, f"[{voice}] status={resp.status_code} body={resp.text}"
+        url = resp.json().get("url")
+        assert url and re.match(r"^/api/tts/[a-f0-9]{64}\.mp3$", url)
+        audio = api_client.get(f"{BASE_URL}{url}", timeout=60)
+        assert audio.status_code == 200
+        assert audio.headers.get("content-type", "").startswith("audio/mpeg")
+        assert len(audio.content) > 500
 
 
 class TestTTSGreetings:

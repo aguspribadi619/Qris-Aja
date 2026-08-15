@@ -40,6 +40,8 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 
 - 2026-06: Enhancement Suara pembayaran — (1) Tiap karakter suara punya foto avatar (crop dari "karakter suara.png" ke `/assets/characters/{id}.png`) + tombol "Tes" per karakter yang memutar sapaan khas (`VOICE_GREETINGS` + `previewVoice` di paymentSound.ts). (2) Volume relatif diubah ke Pelan 30% / Sedang 60% / Keras 100% dari volume perangkat (aplikasi tidak bisa melebihi volume HP — keterbatasan OS). (3) Backend TTS naik ke `tts-1-hd` speed 0.94 untuk kejernihan; voice remap lilis=coral, parjo=onyx, bagas=ash, putri=nova. Terverifikasi testing_agent iteration_3 (backend 10/10, frontend semua interaksi lolos).
 
+- 2026-06: TTS diganti ke **ElevenLabs** (`eleven_multilingual_v2`) untuk suara natural & fasih Bahasa Indonesia. 4 karakter = 4 voice berbeda: Lilis=Sarah (wanita hangat), Parjo=George (pria matang), Bagas=Liam (pria muda energik), Putri=Alice (wanita jernih). `ELEVENLABS_API_KEY` di backend/.env. Endpoint kontrak sama (`/api/tts/generate`, `/api/tts/{key}.mp3`), cache Mongo `tts_audio`. Tombol "Tes" per karakter kini ada indikator "Memutar" + spinner (tidak dibatasi durasi). Intro/outro custom dibatasi maks 3 detik. Header Beranda diganti pakai gambar barista (assets/header-bg.png) dengan logo + "Selamat pagi, Agus" tersusun di kiri.
+
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
 - P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.
