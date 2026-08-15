@@ -13,7 +13,7 @@ import re
 import pytest
 import requests
 
-BASE_URL = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://mobile-app-builder-2902.preview.emergentagent.com").rstrip("/")
+BASE_URL = (os.environ.get("EXPO_PUBLIC_BACKEND_URL") or os.environ.get("EXPO_BACKEND_URL") or "https://mobile-app-builder-2902.preview.emergentagent.com").rstrip("/")
 
 VOICES = ["putri", "lilis", "parjo", "bagas"]
 SAMPLE_TEXT = "lima puluh ribu rupiah"
@@ -55,8 +55,23 @@ class TestTTSGenerate:
             resp = api_client.post(f"{BASE_URL}/api/tts/generate", json={"text": SAMPLE_TEXT, "voice": v}, timeout=60)
             assert resp.status_code == 200
             keys[v] = _extract_key(resp.json()["url"])
-        # putri->nova, lilis->shimmer, parjo->onyx, bagas->echo — all distinct
+        # putri->nova, lilis->coral, parjo->onyx, bagas->ash — all distinct
         assert len(set(keys.values())) == len(VOICES), f"non-distinct keys per voice: {keys}"
+
+
+class TestTTSGreetings:
+    """Character signature greetings (per-character 'Tes' button)"""
+
+    def test_lilis_greeting_generates_playable_mp3(self, api_client):
+        text = "Sampurasun, abdi Teh Lilis. Kumaha damang?"
+        resp = api_client.post(f"{BASE_URL}/api/tts/generate", json={"text": text, "voice": "lilis"}, timeout=60)
+        assert resp.status_code == 200, resp.text
+        url = resp.json().get("url")
+        assert url and re.match(r"^/api/tts/[a-f0-9]{64}\.mp3$", url)
+        audio = api_client.get(f"{BASE_URL}{url}", timeout=60)
+        assert audio.status_code == 200
+        assert audio.headers.get("content-type", "").startswith("audio/mpeg")
+        assert len(audio.content) > 500
 
     def test_caching_idempotent_same_text_voice(self, api_client):
         payload = {"text": "cache probe", "voice": "putri"}

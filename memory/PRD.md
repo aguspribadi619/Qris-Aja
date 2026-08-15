@@ -38,6 +38,8 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 
 - 2026-06: Suara pembayaran — urutan modular INTRO → NOMINAL → OUTRO dengan jeda minimal (~140ms). 4 karakter suara (Teh Lilis, Mas Parjo, Kak Bagas, Kak Putri=default) dipetakan ke voice OpenAI tts-1 berbeda (shimmer/onyx/echo/nova) di `VOICE_MAP` backend. Intro/outro custom (upload/rekam maks 5dtk) atau default TTS "Sukses"/"Terima kasih". Wiring state induk `index.tsx`: state `outro`+persist, default voice `putri`, ganti panggilan usang `playPaymentSound`→`announcePayment`, handler `previewSound` (tombol Preview Suara). Terverifikasi testing_agent (backend 9/9, frontend 24/24).
 
+- 2026-06: Enhancement Suara pembayaran — (1) Tiap karakter suara punya foto avatar (crop dari "karakter suara.png" ke `/assets/characters/{id}.png`) + tombol "Tes" per karakter yang memutar sapaan khas (`VOICE_GREETINGS` + `previewVoice` di paymentSound.ts). (2) Volume relatif diubah ke Pelan 30% / Sedang 60% / Keras 100% dari volume perangkat (aplikasi tidak bisa melebihi volume HP — keterbatasan OS). (3) Backend TTS naik ke `tts-1-hd` speed 0.94 untuk kejernihan; voice remap lilis=coral, parjo=onyx, bagas=ash, putri=nova. Terverifikasi testing_agent iteration_3 (backend 10/10, frontend semua interaksi lolos).
+
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
 - P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.

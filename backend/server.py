@@ -30,7 +30,9 @@ api_router = APIRouter(prefix="/api")
 
 # Text-to-Speech engine (Emergent managed OpenAI TTS)
 tts_engine = OpenAITextToSpeech(api_key=os.environ.get('EMERGENT_LLM_KEY'))
-VOICE_MAP = {"pria": "onyx", "wanita": "nova", "putri": "nova", "bagas": "echo", "parjo": "onyx", "lilis": "shimmer"}
+TTS_MODEL = "tts-1-hd"          # higher quality = clearer pronunciation
+TTS_SPEED = 0.94                # slightly slower for clarity on Indonesian words
+VOICE_MAP = {"pria": "onyx", "wanita": "nova", "putri": "nova", "bagas": "ash", "parjo": "onyx", "lilis": "coral"}
 
 
 class TTSRequest(BaseModel):
@@ -44,10 +46,10 @@ async def generate_tts(req: TTSRequest):
     text = (req.text or "").strip()[:500]
     if not text:
         raise HTTPException(status_code=400, detail="text is required")
-    key = hashlib.sha256(f"{text}|{voice}|tts-1".encode()).hexdigest()
+    key = hashlib.sha256(f"{text}|{voice}|{TTS_MODEL}|{TTS_SPEED}".encode()).hexdigest()
     existing = await db.tts_audio.find_one({"key": key})
     if not existing:
-        audio_bytes = await tts_engine.generate_speech(text=text, model="tts-1", voice=voice)
+        audio_bytes = await tts_engine.generate_speech(text=text, model=TTS_MODEL, voice=voice, speed=TTS_SPEED)
         await db.tts_audio.insert_one({
             "key": key,
             "b64": base64.b64encode(audio_bytes).decode(),

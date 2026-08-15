@@ -1,0 +1,48 @@
+{
+  "summary": "Both backend TTS APIs and Suara pembayaran UI enhancements verified. 10/10 pytest cases pass on 390x844 mobile viewport. Backend POST /api/tts/generate (tts-1-hd, speed 0.94) returns valid mp3 for putri/lilis/parjo/bagas with 4 DISTINCT cache keys (new voice map lilis=coral, bagas=ash). Lilis Sundanese greeting 'Sampurasun, abdi Teh Lilis. Kumaha damang?' returns playable audio/mpeg. Idempotent caching, 404 unknown key, 400 empty/whitespace text all correct. Frontend: 4 voice cards render with photo avatars from /assets/characters/{id}.png (all 4 images matched in DOM); Kak Putri default; tapping voice-lilis moves the checkmark; each per-character test-voice-{id} button is pressable without crash and invokes previewVoice/TTS greeting; volume segments vol-Pelan/vol-Sedang/vol-Keras selectable and highlight correctly; pick/record intro & outro buttons render and are interactive; Preview Suara and Test pembayaran work; test-payment inserts Rp 42.500 transaction visible in Riwayat. No red-screen errors, no page-level exceptions.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (React Native Web)", "issues": [
+        "Console still warns: 'shadow*' style props are deprecated — use boxShadow (unchanged from iteration_2).",
+        "Console still warns: props.pointerEvents is deprecated — use style.pointerEvents (Toast component in index.tsx uses <View pointerEvents=\"none\">, unchanged from iteration_2)."
+      ]}
+    ],
+    "react_native_issues": [
+      {"component": "Toast", "issue": "Uses deprecated prop pointerEvents; migrate to style.pointerEvents. Reference: /app/frontend/app/index.tsx:230"},
+      {"component": "StyleSheet shadow*", "issue": "Deprecated shadowColor/shadowOpacity/shadowRadius/shadowOffset in styles; migrate to boxShadow on web while keeping native compatibility. Reference: /app/frontend/app/index.tsx (styles.outletPill, styles.balanceCard, styles.actionTile, styles.summaryCard, styles.fab, styles.badge, styles.badgeInner)."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tts.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/screens/sound_settings.jpeg",
+    "/app/test_reports/screens/lilis_selected.jpeg",
+    "/app/test_reports/screens/history.jpeg"
+  ],
+  "action_items": [
+    "Optional cleanup (carry-over from iteration_2): replace deprecated shadow* style props with boxShadow (RN Web) and pointerEvents prop with style.pointerEvents on Toast.",
+    "No blocking issues detected for this enhancement round."
+  ],
+  "critical_code_review_comments": [
+    "Backend VOICE_MAP correctly updated: lilis->coral, parjo->onyx, bagas->ash, putri->nova; distinct sha256 cache keys confirmed (also depend on TTS_MODEL/TTS_SPEED which are folded into the key hash, so upgrading model invalidated old cache — expected).",
+    "TTS_MODEL='tts-1-hd' and TTS_SPEED=0.94 wired to OpenAITextToSpeech.generate_speech — greeting audio ~non-trivial size, content-type audio/mpeg, no MongoDB _id leakage.",
+    "paymentSound.ts exposes VOICE_GREETINGS and previewVoice() correctly; per-character 'Tes' button in index.tsx wires to onTestVoice -> previewVoice(v, volume) without blocking UI.",
+    "CHAR_IMG static require() mapping is fine; all 4 asset files exist at /app/frontend/assets/characters/{lilis,parjo,bagas,putri}.png and load in the DOM.",
+    "Volume mapping vols=[Pelan=0.3, Sedang=0.6, Keras=1.0] matches spec; segment highlight uses tolerance |volume-o.v|<0.01 which is robust for float compare.",
+    "Default voice remains 'putri' via useState('putri') and storage.getItem fallback — verified by checkmark placement on Kak Putri on first mount.",
+    "Uses expo-audio (not deprecated expo-av). No deprecated Expo packages detected."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_tts.py (added TestTTSGreetings.test_lilis_greeting_generates_playable_mp3; updated voice mapping comment; BASE_URL falls back to EXPO_PUBLIC_BACKEND_URL then EXPO_BACKEND_URL)",
+    "/app/test_reports/iteration_3.json (new)"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% (all voice/avatar/volume/intro/outro/preview/test-payment checks)"},
+  "seed_data_creation": "Backend TTS cache documents inserted by pytest calls for sample_text 'lima puluh ribu rupiah', 'cache probe', and Lilis greeting text; harmless cached rows. One new Rp 42.500 transaction appended to txs list during Test pembayaran UI test (in-memory only).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_tts.py (10 tests, ~13s). Screenshots stored under /app/test_reports/screens/. Audio playback in headless web preview cannot be aurally validated; interaction and no-crash paths confirmed. Deprecation warnings (shadow*, pointerEvents) are pre-existing and non-blocking.",
+  "rca_of_issue": "N/A — no blocking bugs found. Enhancement is functioning as specified: photo avatars visible, per-character Tes buttons interactive, distinct voices, volume mapping 0.3/0.6/1.0, tts-1-hd + speed 0.94 backend."
+}

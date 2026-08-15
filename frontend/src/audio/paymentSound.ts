@@ -27,6 +27,14 @@ export const VOICE_CHARS = [
   { id: "putri", name: "Kak Putri", desc: "Indonesia · jelas & ramah" },
 ];
 
+// Short characteristic greeting per persona (used by the per-character "Test" button).
+export const VOICE_GREETINGS: Record<string, string> = {
+  lilis: "Sampurasun, abdi Teh Lilis. Kumaha damang? Wilujeng sumping!",
+  parjo: "Sugeng rawuh, kula Mas Parjo. Piye kabare? Monggo mampir!",
+  bagas: "Halo, aku Bagas! Siap bantu transaksinya, Kak. Semangat!",
+  putri: "Halo, saya Putri. Selamat datang di QRIS Aja!",
+};
+
 const ttsCache: Record<string, string> = {};
 
 async function generateTts(text: string, voice: string): Promise<string | null> {
@@ -119,6 +127,14 @@ export async function announcePayment(opts: AnnounceOpts) {
 
 export async function previewAnnouncement(opts: Omit<AnnounceOpts, "amount">) {
   await announcePayment({ ...opts, amount: 50000 });
+}
+
+// Play just the character's signature greeting so the user can audition each voice.
+export async function previewVoice(voiceChar: string, volume = 1) {
+  await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+  const text = VOICE_GREETINGS[voiceChar] || "Halo, selamat datang di QRIS Aja!";
+  const url = await generateTts(text, voiceChar);
+  if (url) await playSegment(url, 20000, volume);
 }
 
 export async function pickIntroAudio(): Promise<{ uri: string; name: string; duration: number } | null> {
