@@ -94,35 +94,33 @@ export type AnnounceOpts = {
   repeat?: boolean;
 };
 
-// Modular announcement: INTRO -> NOMINAL -> OUTRO with minimal gap.
-// TTS segments are fetched in parallel up-front (and cached) for low latency; playback is
-// strictly sequential so segments never overlap or get cut off. Failed segments are skipped.
+// Announcement: [custom intro clip] -> [combined TTS] -> [custom outro clip].
+// To avoid the ~1-2s gaps that came from stitching 3 separate remote clips, all the
+// TTS parts (default "Sukses", the nominal, default "Terima kasih") are merged into ONE
+// utterance so the common case (no custom clips) plays completely gapless.
 export async function announcePayment(opts: AnnounceOpts) {
   const voiceChar = opts.voiceChar || "putri";
   const volume = opts.volume ?? 1;
-  const useIntroTts = !opts.intro;
-  const useOutroTts = !opts.outro;
+  const useIntroTts = !opts.intro;   // no custom intro -> fold "Sukses" into the combined text
+  const useOutroTts = !opts.outro;   // no custom outro -> fold "Terima kasih" into the combined text
   const nominalText = `${terbilang(opts.amount)} rupiah`;
+  const times = opts.repeat ? 2 : 1;
 
   await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
 
-  const [introUrl, nominalUrl, outroUrl] = await Promise.all([
-    useIntroTts ? generateTts("Sukses", voiceChar) : Promise.resolve(null),
-    generateTts(nominalText, voiceChar),
-    useOutroTts ? generateTts("Terima kasih", voiceChar) : Promise.resolve(null),
-  ]);
+  const parts: string[] = [];
+  if (useIntroTts) parts.push("Sukses");
+  for (let i = 0; i < times; i++) parts.push(nominalText);
+  if (useOutroTts) parts.push("Terima kasih");
+  const combinedText = parts.join(", ") + ".";
+  const combinedUrl = await generateTts(combinedText, voiceChar);
 
-  // INTRO
-  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 3000, volume);
-  else if (introUrl) await playSegment(introUrl, 8000, volume);
-
-  // NOMINAL (dynamic, optionally repeated)
-  const times = opts.repeat ? 2 : 1;
-  for (let i = 0; i < times; i++) { if (nominalUrl) await playSegment(nominalUrl, 15000, volume); }
-
-  // OUTRO
-  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 3000, volume);
-  else if (outroUrl) await playSegment(outroUrl, 8000, volume);
+  // Custom intro clip (default intro word is already inside the combined TTS)
+  if (opts.intro && opts.intro.uri) await playSegment(opts.intro.uri, opts.intro.max || 3000, volume, 60);
+  // Combined TTS (gapless)
+  if (combinedUrl) await playSegment(combinedUrl, 25000, volume, 60);
+  // Custom outro clip (default outro word is already inside the combined TTS)
+  if (opts.outro && opts.outro.uri) await playSegment(opts.outro.uri, opts.outro.max || 3000, volume, 60);
 }
 
 export async function previewAnnouncement(opts: Omit<AnnounceOpts, "amount">) {

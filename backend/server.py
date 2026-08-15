@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime, timezone
-from elevenlabs import ElevenLabs
+from elevenlabs import ElevenLabs, VoiceSettings
 
 
 ROOT_DIR = Path(__file__).parent
@@ -42,6 +42,10 @@ EL_VOICE_MAP = {
     "wanita": "Xb7hH8MSUJpSbSDYk0k2",
 }
 EL_DEFAULT_VOICE = "Xb7hH8MSUJpSbSDYk0k2"
+# Per-persona speaking speed (ElevenLabs range ~0.7 slow .. 1.2 fast). Slower = clearer.
+EL_SPEED = {"lilis": 0.80, "parjo": 0.86, "bagas": 0.90, "putri": 0.88,
+            "pria": 0.86, "wanita": 0.88}
+EL_DEFAULT_SPEED = 0.88
 
 
 class TTSRequest(BaseModel):
@@ -52,10 +56,11 @@ class TTSRequest(BaseModel):
 @api_router.post("/tts/generate")
 async def generate_tts(req: TTSRequest):
     voice_id = EL_VOICE_MAP.get(req.voice, EL_DEFAULT_VOICE)
+    speed = EL_SPEED.get(req.voice, EL_DEFAULT_SPEED)
     text = (req.text or "").strip()[:500]
     if not text:
         raise HTTPException(status_code=400, detail="text is required")
-    key = hashlib.sha256(f"{text}|{voice_id}|{EL_MODEL}".encode()).hexdigest()
+    key = hashlib.sha256(f"{text}|{voice_id}|{EL_MODEL}|{speed}".encode()).hexdigest()
     existing = await db.tts_audio.find_one({"key": key})
     if not existing:
         audio_stream = el_client.text_to_speech.convert(
@@ -63,6 +68,13 @@ async def generate_tts(req: TTSRequest):
             voice_id=voice_id,
             model_id=EL_MODEL,
             output_format="mp3_44100_128",
+            voice_settings=VoiceSettings(
+                stability=0.5,
+                similarity_boost=0.75,
+                style=0.0,
+                use_speaker_boost=True,
+                speed=speed,
+            ),
         )
         audio_bytes = b"".join(audio_stream)
         await db.tts_audio.insert_one({
