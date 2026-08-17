@@ -17,11 +17,44 @@ export function SoundSettings({ onBack, voice, onVoice, onTestVoice, intro, onIn
   const recTimer = React.useRef<any>(null);
   const holdingRef = React.useRef(false);
   const recTargetRef = React.useRef<string | null>(null);
+  const micPermRef = React.useRef<{ granted: boolean; canAskAgain?: boolean } | null>(null);
+  // Ask for mic permission once when this screen mounts, not on the record button's
+  // press-in: the system permission popup steals touch focus and releases the
+  // press-and-hold gesture before recorder.record() ever runs, so by the time the
+  // permission promise resolves the user has already "let go" and nothing records.
+  React.useEffect(() => {
+    (async () => {
+      try { micPermRef.current = await AudioModule.requestRecordingPermissionsAsync(); }
+      catch { micPermRef.current = { granted: false, canAskAgain: true }; }
+    })();
+  }, []);
   const setFor = (t: string) => (t === "intro" ? onIntro : onOutro);
   const label = (t: string) => (t === "intro" ? "Intro" : "Outro");
   const pick = async (t: string) => { try { const res = await pickIntroAudio(); if (!res) return; if (res.duration && res.duration > 3.5) { onToast(`Audio ${label(t).toLowerCase()} maksimal 3 detik`); return; } setFor(t)({ uri: res.uri, name: res.name }); onToast(`Audio ${label(t).toLowerCase()} tersimpan`); } catch { onToast("Gagal memilih audio"); } };
   const stopRec = async () => { holdingRef.current = false; const t = recTargetRef.current; if (recTimer.current) { clearTimeout(recTimer.current); recTimer.current = null; } if (!t) return; recTargetRef.current = null; try { await recorder.stop(); } catch {} try { await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }); } catch {} setRecTarget(null); let uri = recorder.uri; if (uri) { try { const dest = `${FileSystem.cacheDirectory}qa_${t}_${Date.now()}.m4a`; await FileSystem.copyAsync({ from: uri, to: dest }); uri = dest; } catch {} setFor(t)({ uri, name: `Rekaman ${label(t).toLowerCase()}` }); onToast(`${label(t)} rekaman tersimpan`); } };
-  const startRec = async (t: string) => { holdingRef.current = true; try { const perm = await AudioModule.requestRecordingPermissionsAsync(); if (!perm.granted) { onToast("Izin mikrofon diperlukan untuk merekam"); if (perm.canAskAgain === false) Linking.openSettings(); return; } await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true }); await recorder.prepareToRecordAsync(); if (!holdingRef.current) { try { await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }); } catch {} return; } recorder.record(); recTargetRef.current = t; setRecTarget(t); recTimer.current = setTimeout(() => { stopRec(); }, 3000); } catch { onToast("Gagal merekam audio"); recTargetRef.current = null; setRecTarget(null); } };
+  const startRec = async (t: string) => {
+    holdingRef.current = true;
+    try {
+      // Permission was already requested on mount, so this is normally a sync cache
+      // read with no popup in the way of the gesture. Only fall back to an inline
+      // (gesture-risking) request if the mount request genuinely hasn't resolved yet.
+      let perm = micPermRef.current;
+      if (!perm) perm = await AudioModule.requestRecordingPermissionsAsync();
+      micPermRef.current = perm;
+      if (!perm.granted) {
+        if (perm.canAskAgain === false) { onToast("Izin mikrofon dinonaktifkan. Aktifkan manual di Setelan HP > Aplikasi > QRIS Aja > Izin > Mikrofon."); Linking.openSettings(); }
+        else { onToast("Izin mikrofon diperlukan untuk merekam"); }
+        return;
+      }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      if (!holdingRef.current) { try { await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }); } catch {} return; }
+      recorder.record();
+      recTargetRef.current = t;
+      setRecTarget(t);
+      recTimer.current = setTimeout(() => { stopRec(); }, 3000);
+    } catch { onToast("Gagal merekam audio"); recTargetRef.current = null; setRecTarget(null); }
+  };
   const vols = [{ k: "Pelan", v: 0.3 }, { k: "Sedang", v: 0.6 }, { k: "Keras", v: 1 }];
   const clip = (t: string) => (t === "intro" ? intro : outro);
   const defWord = (t: string) => (t === "intro" ? "Sukses" : "Terima Kasih");
