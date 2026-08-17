@@ -127,15 +127,16 @@ export async function announcePayment(opts: AnnounceOpts) {
   const combinedText = parts.join(". ") + ".";
   const combinedUrl = await generateTts(combinedText, voiceChar);
 
-  const segs: { uri: string; max: number }[] = [];
-  if (opts.intro && opts.intro.uri) segs.push({ uri: opts.intro.uri, max: opts.intro.max || 3500 });
-  if (combinedUrl) segs.push({ uri: combinedUrl, max: 25000 });
-  if (opts.outro && opts.outro.uri) segs.push({ uri: opts.outro.uri, max: opts.outro.max || 3500 });
+  const segs: { uri: string; max: number; vol: number }[] = [];
+  // Custom clips play a touch softer so the (louder-normalized) nominal is never buried.
+  if (opts.intro && opts.intro.uri) segs.push({ uri: opts.intro.uri, max: opts.intro.max || 3500, vol: volume * 0.8 });
+  if (combinedUrl) segs.push({ uri: combinedUrl, max: 25000, vol: volume });
+  if (opts.outro && opts.outro.uri) segs.push({ uri: opts.outro.uri, max: opts.outro.max || 3500, vol: volume * 0.8 });
 
-  // Preload every segment first so transitions are instant — removes the buffering gap
-  // between a local intro clip and the remote TTS, and guarantees the outro clip plays.
-  const players = await Promise.all(segs.map((s) => loadPlayer(s.uri)));
-  for (let i = 0; i < players.length; i++) { await playPlayer(players[i], volume, segs[i].max); }
+  // Load each segment right before playing it (not all up-front): a preloaded remote
+  // player can get released while it sits idle during the intro clip, which made the
+  // nominal go silent. Loading just-in-time keeps every segment reliably audible.
+  for (const s of segs) { await playSegment(s.uri, s.max, s.vol); }
 }
 
 export async function previewAnnouncement(opts: Omit<AnnounceOpts, "amount">) {
