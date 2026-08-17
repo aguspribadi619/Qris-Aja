@@ -48,9 +48,10 @@ Aplikasi mobile "QRIS Aja" — prototipe manajemen merchant & pembayaran QRIS un
 
 - 2026-06: Fix "nominal tenggelam" saat pakai intro/outro custom — rekaman mic jauh lebih kencang dari TTS. Backend kini menormalisasi loudness TTS via ffmpeg (`loudnorm I=-11:TP=-1.5`) → mean naik ~7 dB (−22.6→−15.2 dB), puncak −1.7 dB, konsisten & lantang; fallback aman ke raw jika ffmpeg absen. Cache key ditambah tag `n1` (regenerasi versi baru). Frasa pengumuman dipisah kalimat dgn titik ("Sukses. [nominal] rupiah. Terima kasih.") agar nominal menonjol. `warmup_tts.py` disesuaikan & di-run ulang (putri + sapaan).
 
+- 2026-06: **Refactor struktur kode** — file monolitik `app/index.tsx` (~250 baris) dipecah jadi modular tanpa mengubah UI/behavior sama sekali: `src/theme.ts` (warna `C`, `styles`, tipe, konstanta outlets/transactions/outletOmzet, helper parseRp/formatRp/formatJt, LOGO/CHAR_IMG/HEADER_BG); `src/components/` (Icon, Badge, Header, TransactionRow, EmptyState, Toast, Toggle, BottomNav); `src/components/modals/` (QrisModal, OutletModal, NotificationModal, EmployeeModal, QrisPrintModal, QrisDynamicModal); `src/screens/` (Home, History, Analytics, Profile, Employees, SoundSettings). `index.tsx` kini orchestrator murni (121 baris, semua state). Semua testID dipertahankan. Backup monolit di `/app/index.tsx.backup`. Terverifikasi testing_agent iteration_5 (28/28 lolos, UI/behavior 100% identik).
+
 ## Backlog
 - P1: Riwayat — export CSV simulasi, filter tanggal, search.
-- P2: Pecah file monolitik `index.tsx` menjadi komponen atomik bila app diperbesar.
 - P2: State kosong/error/retry lebih lengkap di tiap tab.
 
 ## Next Tasks

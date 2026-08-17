@@ -1,0 +1,10 @@
+import React from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { C, Employee, styles } from "@/src/theme";
+import { Icon } from "@/src/components/Icon";
+import { Header } from "@/src/components/Header";
+
+export function Employees({ onBack, employees, onAdd, onEdit, onRemove }: any) {
+  return <View style={styles.flex}><Header title="Kelola pegawai" onBack={onBack} /><ScrollView contentContainerStyle={styles.page}><Text style={styles.pageIntro}>Atur akses tim di setiap outlet Anda.</Text>{employees.map((employee: Employee) => <View style={styles.employeeCard} key={employee.id}><LinearGradient colors={[C.navy, C.purple]} style={styles.employeeAvatar}><Text style={styles.avatarText}>{employee.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}</Text></LinearGradient><View style={styles.transactionMain}><Text style={styles.transactionOutlet}>{employee.name}</Text><Text style={styles.muted}>{employee.outlet}</Text><View style={styles.rolePill}><Text style={styles.roleText}>{employee.role}</Text></View></View><View style={styles.employeeActions}><Pressable testID={`edit-${employee.id}`} onPress={() => onEdit(employee)} style={styles.miniButton}><Icon name="pencil-outline" color={C.navy} size={17} /></Pressable><Pressable testID={`delete-${employee.id}`} onPress={() => onRemove(employee.id)} style={[styles.miniButton, { backgroundColor: "#FFF0EE" }]}><Icon name="trash-outline" color={C.red} size={17} /></Pressable></View></View>)}<Pressable testID="add-employee" onPress={onAdd} style={({ pressed }) => [styles.addEmployee, pressed && styles.pressed]}><Icon name="add-circle-outline" color={C.teal} size={21} /><Text style={styles.addEmployeeText}>Tambah pegawai</Text></Pressable><View style={styles.helperBox}><Icon name="shield-checkmark-outline" color={C.teal} size={20} /><Text style={styles.helperText}>Akses pegawai membantu operasional tetap aman dan mudah dipantau.</Text></View></ScrollView></View>;
+}

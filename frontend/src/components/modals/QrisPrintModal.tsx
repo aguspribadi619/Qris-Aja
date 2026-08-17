@@ -1,0 +1,10 @@
+import React from "react";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { C, LOGO, styles } from "@/src/theme";
+import { QuickArt } from "@/src/components/QuickIcons";
+import { Icon } from "@/src/components/Icon";
+
+export function QrisPrintModal({ visible, onClose, outlet, onToast }: any) {
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><View style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll}><View style={styles.sheetHandle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>Kartu QRIS</Text><Text style={styles.muted}>Siap dicetak untuk meja kasir</Text></View><Pressable testID="close-qris-print" onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View><View style={styles.printCard}><View style={styles.printBrandBar}><Text style={styles.printBrandText}>QRIS</Text><Text style={styles.printBrandSub}>QR CODE STANDAR PEMBAYARAN</Text></View><Text style={styles.printMerchant}>{outlet}</Text><Text style={styles.printNmid}>NMID : ID1023456789012</Text><View style={styles.printQrBox}><QuickArt name="qris" size={180} /></View><Text style={styles.printHint}>Pindai untuk membayar dengan aplikasi apa pun</Text><Image source={{ uri: LOGO }} style={styles.printLogo} contentFit="contain" /></View><View style={styles.printButtons}><Pressable testID="print-qris" onPress={() => { onClose(); onToast("Kartu QRIS dikirim ke printer"); }} style={({ pressed }) => [styles.printBtnPrimary, pressed && styles.pressed]}><Icon name="print-outline" color="#fff" size={18} /><Text style={styles.printBtnPrimaryText}>Cetak</Text></Pressable><Pressable testID="share-qris" onPress={() => { onClose(); onToast("Kartu QRIS dibagikan"); }} style={({ pressed }) => [styles.printBtnGhost, pressed && styles.pressed]}><Icon name="share-social-outline" color={C.navy} size={18} /><Text style={styles.printBtnGhostText}>Bagikan</Text></Pressable></View></ScrollView></View></Modal>;
+}

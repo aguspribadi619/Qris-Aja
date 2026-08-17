@@ -1,0 +1,9 @@
+import React from "react";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { C, styles } from "@/src/theme";
+import { QuickArt } from "@/src/components/QuickIcons";
+import { Icon } from "@/src/components/Icon";
+
+export function QrisModal({ visible, onClose, onStatic, onDynamic }: any) {
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><View style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll}><View style={styles.sheetHandle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>Buat QRIS</Text><Text style={styles.muted}>Terima pembayaran dengan cepat</Text></View><Pressable testID="close-qris" onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View><Pressable testID="static-qris" onPress={() => onStatic()} style={styles.qrisOption}><View style={styles.qrisIcon}><QuickArt name="qris" size={44} /></View><View style={styles.transactionMain}><Text style={styles.optionTitle}>QRIS Statis</Text><Text style={styles.muted}>Pembeli mengisi nominal pembayaran</Text></View><Icon name="chevron-forward" color={C.muted} /></Pressable><Pressable testID="dynamic-qris" onPress={() => onDynamic()} style={styles.qrisOption}><View style={styles.qrisIcon}><QuickArt name="cash" size={44} /></View><View style={styles.transactionMain}><Text style={styles.optionTitle}>QRIS Dinamis</Text><Text style={styles.muted}>Anda isi nominal, pembayaran lebih akurat</Text></View><Icon name="chevron-forward" color={C.muted} /></Pressable><View style={styles.soundRow}><Icon name="volume-high-outline" color={C.teal} size={20} /><Text style={styles.soundText}>Notifikasi pembayaran aktif dalam Bahasa Indonesia</Text><Icon name="checkmark-circle" color={C.teal} size={20} /></View></ScrollView></View></Modal>;
+}

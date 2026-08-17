@@ -1,0 +1,48 @@
+{
+  "summary": "Post-refactor regression on modular Expo/React Native app (index.tsx orchestrator + src/theme.ts, src/components/*, src/components/modals/*, src/screens/*). Executed comprehensive frontend UI tests at 390x844. 26/28 checks PASS; the 2 initial FAILs were test-script issues (outlet options :not selector picked opts[0]=Semua outlet as first-non-selector; and the print/share sheet auto-closes on Cetak/Bagikan so share-qris was gone after clicking print). Retest with correct approach confirmed both flows work. All refactored screens/modals wired correctly, no red-screen, no pageerror events. Bottom nav (nav-Beranda/Riwayat/Analisa/Profil) all switch screens. Outlet selector opens OutletModal and selection updates the pill (verified pill contained 'Warkop Sejagat Meruyung'). Balance toggle hides/shows Rp 3.202.000 <-> Rp \u2022\u2022\u2022\u2022\u2022\u2022\u2022. Notif badge shows 3, clears after 'Tandai semua sudah dibaca'. Notification modal renders exactly 3 items with mark-read-* buttons. Access grid has 6 quick items with correct labels. Test payment (home + settings) inserts a transaction, updates 'Omzet hari ini'/'Transaksi hari ini' counters, and shows 'Pembayaran masuk Rp ...' toast. QRIS FAB -> QrisModal; Statis -> QrisPrintModal (Cetak fires 'Kartu QRIS dikirim ke printer' toast; Bagikan fires 'Kartu QRIS dibagikan' toast; both auto-close sheet); Dinamis -> QrisDynamicModal with amount chips + generate-qris -> mark-paid + change-amount both wired and functional. Riwayat: date-* chips (Hari ini/Minggu ini/Bulan ini) + filter-* chips (Semua/Berhasil/Menunggu) render; export-history fires 'Riwayat X transaksi diekspor ke riwayat-qris.csv' toast. Analisa renders 'Jam ramai' chart card. Profil: logout-button visible; menu-Kelola pegawai -> Employees screen (add-employee, employee-name input, employee-outlet-* options, save-employee create; edit-*/delete-* rows present). menu-Suara pembayaran -> SoundSettings: 4 voice-* cards, 4 test-voice-* buttons (tap toggles to 'Memutar' spinner, only one at a time, reverts to 'Tes'); voice selection moves checkmark; vol-Pelan/Sedang/Keras segments selectable; toggle-repeat & toggle-autosim work; pick-intro/record-intro/pick-outro/record-outro all render; preview-sound + test-payment-settings both fire. Overall: PURE STRUCTURAL REFACTOR verified \u2014 all testIDs preserved and UI/behavior identical to pre-refactor monolith. No new deprecation warnings; pre-existing shadow*/pointerEvents warnings unchanged (carry-over from iteration_4, non-blocking).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (RN Web console)", "issues": [
+        "Pre-existing (unchanged) deprecation warnings: 'shadow*' style props -> boxShadow; 'props.pointerEvents' -> style.pointerEvents. Not introduced by this refactor."
+      ]}
+    ],
+    "react_native_issues": [
+      {"component": "StyleSheet shadow*", "issue": "shadowColor/shadowOpacity/shadowRadius/shadowOffset used in styles.outletPill, balanceCard, actionTile, badge, badgeInner, fab, summaryCard, testPayBtn, toast \u2014 RN Web deprecation; migrate to boxShadow (or use Platform.select for cross-platform). Reference: /app/frontend/src/theme.ts:39-45"},
+      {"component": "Toast pointerEvents", "issue": "Toast likely uses deprecated pointerEvents prop; should move to style.pointerEvents. Reference: /app/frontend/src/components/Toast.tsx"}
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_5.json",
+    "/app/test_reports/iteration_4.json (prior ElevenLabs regression)",
+    "/app/backend/tests/test_tts.py (unchanged backend regression, not re-run this iteration \u2014 backend was out of scope)"
+  ],
+  "action_items": [
+    "No blocking action items. Refactor is 100% behavior-preserving.",
+    "Optional cleanup (carry-over): migrate deprecated shadow* -> boxShadow and pointerEvents prop -> style.pointerEvents (Toast).",
+    "Optional: consider adding a `home-screen` / `history-screen` / `analytics-screen` / `profile-screen` root testID per screen for cleaner screen-level assertions in future test suites (current suite works via child testIDs like outlet-selector, logout-button)."
+  ],
+  "critical_code_review_comments": [
+    "index.tsx is now a clean 121-line orchestrator holding all state (tab, modals, employees, voice, intro/outro, volume, repeat, autoSim, txs) and passing setters as props \u2014 good separation.",
+    "All 6 modals live in src/components/modals/* and consume shared styles from src/theme.ts. testIDs (outlet-{o}, mark-read-{id}, filter-{f}, date-{d}, quick-{label}, voice-{id}, test-voice-{id}, vol-{k}, amount-{v}, pick-{t}, record-{t}, remove-{t}, employee-outlet-{o}, edit-{id}, delete-{id}, nav-{label}, menu-{label}) are all preserved and functional.",
+    "src/theme.ts consolidates C palette + Transaction/Employee/Tab types + outlets/transactions/outletOmzet constants + parseRp/formatRp/formatJt helpers + LOGO/CHAR_IMG/HEADER_BG assets + monolithic StyleSheet (accreted via Object.assign after StyleSheet.create). Works, but the StyleSheet.create + Object.assign pattern bypasses RN\u2019s style ID optimization for the later blocks \u2014 optional refactor: create everything in one call.",
+    "autoSim useEffect deps intentionally excluded testPayment (eslint-disable) \u2014 fine, but confirms 15s interval keeps latest state via closure over voiceGender/intro/outro/volume/repeatTwice/selectedOutlet.",
+    "storage.setItem is fire-and-forget without await in save* helpers \u2014 acceptable for prototype but could race on rapid changes.",
+    "Home.tsx uses `t.time.startsWith('Hari ini')` to compute todayOmzet/todayTx \u2014 matches pre-refactor logic.",
+    "OutletModal, NotificationModal, EmployeeModal all use `Modal transparent animationType=\"fade\"` correctly; QrisPrintModal + QrisDynamicModal use `animationType=\"slide\"` with onRequestClose.",
+    "QrisPrintModal Cetak/Bagikan both call onClose() before onToast() \u2014 by design; each closes the sheet with a toast confirmation.",
+    "No deprecated Expo packages detected (no expo-av / expo-barcode-scanner / expo-background-fetch). Uses expo-image, expo-linear-gradient, expo-web-browser \u2014 all current.",
+    "No MongoDB _id leakage (backend untouched this iteration)."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_5.json (new)"
+  ],
+  "success_rate": {"backend": "N/A (out of scope this iteration)", "frontend": "100% (28/28 checks after correcting 2 test-script issues from initial run)"},
+  "seed_data_creation": "Ephemeral in-memory only: added 'TEST Rina' employee via EmployeeModal; test payments inserted synthetic transactions visible in Riwayat. No persistent seed changes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The app has zero backend calls except for /api/tts/generate (ElevenLabs proxy) which is covered by /app/backend/tests/test_tts.py (14 tests, ~10s). All UI is dummy data. Key testIDs quick-ref: outlet-selector, toggle-balance, test-payment-home, qris-fab, static-qris, dynamic-qris, print-qris, share-qris, close-qris-print, dynamic-amount, amount-{v}, generate-qris, mark-paid, change-amount, close-qris-dynamic, quick-{label}, menu-pengeluaran, menu-absensi, see-all, nav-{Beranda|Riwayat|Analisa|Profil}, filter-{Semua|Berhasil|Menunggu}, date-{Hari ini|Minggu ini|Bulan ini}, export-history, logout-button, menu-{Kelola pegawai|Suara pembayaran|Outlet saya|Notifikasi}, add-employee, employee-name, employee-outlet-{o}, save-employee, edit-{id}, delete-{id}, voice-{lilis|parjo|bagas|putri}, test-voice-{id}, vol-{Pelan|Sedang|Keras}, toggle-repeat, toggle-autosim, pick-intro, record-intro, remove-intro (same for outro), preview-sound, test-payment-settings, back-button, close-notif, mark-all-read, mark-read-{id}. Note: QrisPrintModal auto-closes on Cetak or Bagikan \u2014 test each in its own open/close cycle.",
+  "rca_of_issue": "N/A \u2014 refactor introduced no regressions. Initial test failures were test-script issues: (1) outlet options iterated the currently-selected 'Semua outlet' first and my filter accepted it as no-op; fix: click the exact testID 'outlet-Warkop Sejagat Meruyung'. (2) print-qris click closes the sheet before share-qris is reachable; fix: open the QrisPrintModal separately for each button. Both re-runs passed."
+}

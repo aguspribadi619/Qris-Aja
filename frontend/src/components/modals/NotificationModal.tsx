@@ -1,0 +1,10 @@
+import React from "react";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { C, styles } from "@/src/theme";
+import { QuickArt } from "@/src/components/QuickIcons";
+import { Icon } from "@/src/components/Icon";
+
+export function NotificationModal({ visible, onClose, notifications, onMarkRead, onMarkAllRead }: any) {
+  const unread = notifications.filter((n: any) => !n.read).length;
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><View style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll}><View style={styles.sheetHandle} /><View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>Notifikasi</Text><Text style={styles.muted}>{unread > 0 ? `${unread} belum dibaca` : "Semua sudah dibaca"}</Text></View><Pressable testID="close-notif" onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View>{unread > 0 ? <Pressable testID="mark-all-read" onPress={onMarkAllRead} style={styles.markAllRow}><Icon name="checkmark-done-outline" color="#0F806B" size={17} /><Text style={styles.markAllText}>Tandai semua sudah dibaca</Text></Pressable> : null}{notifications.map((n: any) => <View key={n.id} style={[styles.notification, n.read && styles.notificationRead]}><QuickArt name={n.art} size={40} /><View style={styles.transactionMain}><Text style={styles.optionTitle}>{n.title}</Text><Text style={styles.muted}>{n.body}</Text></View>{n.read ? <View style={styles.readTag}><Icon name="checkmark" color={C.muted} size={13} /><Text style={styles.readTagText}>Dibaca</Text></View> : <Pressable testID={`mark-read-${n.id}`} onPress={() => onMarkRead(n.id)} style={({ pressed }) => [styles.markReadBtn, pressed && styles.pressed]}><Text style={styles.markReadText}>Tandai dibaca</Text></Pressable>}</View>)}<View style={styles.guidance}><QuickArt name="suara" size={38} /><View style={styles.transactionMain}><Text style={styles.optionTitle}>Suara pembayaran aktif</Text><Text style={styles.muted}>Pastikan volume perangkat cukup terdengar.</Text></View></View></ScrollView></View></Modal>;
+}

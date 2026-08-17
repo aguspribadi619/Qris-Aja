@@ -1,0 +1,13 @@
+import React, { useState } from "react";
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { C, outlets, styles } from "@/src/theme";
+import { Icon } from "@/src/components/Icon";
+
+export function EmployeeModal({ visible, editing, onClose, onSave }: any) {
+  const [name, setName] = useState(editing?.name || "");
+  const [outlet, setOutlet] = useState(editing?.outlet || outlets[1]);
+  const [role, setRole] = useState(editing?.role || "Kasir");
+  React.useEffect(() => { setName(editing?.name || ""); setOutlet(editing?.outlet || outlets[1]); setRole(editing?.role || "Kasir"); }, [editing, visible]);
+  const save = () => name.trim() ? onSave({ name: name.trim(), outlet, role }) : Alert.alert("Nama belum diisi", "Masukkan nama pegawai terlebih dahulu.");
+  return <Modal visible={visible} transparent animationType="slide"><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalBackdrop}><ScrollView style={styles.sheet} contentContainerStyle={styles.sheetScroll} keyboardShouldPersistTaps="handled"><View style={styles.sheetHeader}><Text style={styles.sheetTitle}>{editing ? "Edit pegawai" : "Tambah pegawai"}</Text><Pressable onPress={onClose} style={styles.close}><Icon name="close" color={C.navy} size={20} /></Pressable></View><Text style={styles.inputLabel}>Nama pegawai</Text><TextInput testID="employee-name" value={name} onChangeText={setName} placeholder="Contoh: Rina Anggraini" placeholderTextColor="#AAB1C8" style={styles.input} /><Text style={styles.inputLabel}>Outlet bertugas</Text><View style={styles.selectWrap}>{outlets.slice(1).map((o) => <Pressable testID={`employee-outlet-${o}`} key={o} onPress={() => setOutlet(o)} style={[styles.selectOption, outlet === o && styles.selectOptionActive]}><Text style={[styles.selectText, outlet === o && styles.selectTextActive]}>{o.replace("Warkop Sejagat ", "")}</Text></Pressable>)}</View><Text style={styles.inputLabel}>Peran</Text><View style={styles.selectWrap}>{["Kasir", "Supervisor"].map((r) => <Pressable key={r} onPress={() => setRole(r)} style={[styles.selectOption, role === r && styles.selectOptionActive]}><Text style={[styles.selectText, role === r && styles.selectTextActive]}>{r}</Text></Pressable>)}</View><View style={styles.formButtons}><Pressable onPress={onClose} style={styles.cancelButton}><Text style={styles.cancelText}>Batal</Text></Pressable><Pressable testID="save-employee" onPress={save} style={styles.saveButton}><Text style={styles.saveText}>Simpan</Text></Pressable></View></ScrollView></KeyboardAvoidingView></Modal>;
+}
