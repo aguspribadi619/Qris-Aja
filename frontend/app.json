@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.mobileappbuilder.hhn6hf",
+      "bundleIdentifier": "id.qrisaja.app",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Rekam audio intro notifikasi pembayaran"
       }
@@ -21,8 +21,12 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.emergent.mobileappbuilder.hhn6hf",
-      "permissions": ["RECORD_AUDIO"]
+      "package": "id.qrisaja.app",
+      "permissions": [
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +48,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6be70c12-62bc-4d3c-8f23-5e1db028dfac"
+      }
     }
   }
 }
